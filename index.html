@@ -1,0 +1,2949 @@
+<!doctype html>
+<html lang="id" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Manajemen Ketahfizan</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+    
+    .card-hover {
+      transition: all 0.3s ease;
+    }
+    
+    .card-hover:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(59, 130, 246, 0.15);
+    }
+    
+    .tab-button {
+      transition: all 0.2s ease;
+    }
+    
+    .tab-button.active {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      color: white;
+    }
+    
+    .checkbox-custom {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      accent-color: #3b82f6;
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.3s ease-in;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .loading-spinner {
+      border: 3px solid #e5e7eb;
+      border-top: 3px solid #3b82f6;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.2s;
+    }
+
+    .input-field:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div id="app" class="h-full w-full bg-gradient-to-br from-blue-50 to-white overflow-auto"><!-- Aplikasi akan di-render di sini -->
+  </div>
+  <script>
+    // URL Google Apps Script Web App
+    const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwU3t891pMb_xTYXwoImT7fiOERavIyf474VTrxq3ldmSWHyHIU_OKbK4GFwIRKKtJy/exec';
+
+    let allRecords = [];
+    let currentUser = null;
+    let currentView = 'login';
+    let selectedSesi = null;
+    let selectedDate = new Date().toISOString().split('T')[0];
+    let userSessions = [];
+    let isLoading = false;
+
+    // Fungsi untuk melakukan request ke Google Sheet
+    async function googleSheetRequest(action, data = {}) {
+      try {
+        isLoading = true;
+        const response = await fetch(GOOGLE_SHEET_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: action,
+            data: data
+          })
+        });
+
+        // Karena mode no-cors, kita tidak bisa membaca response
+        // Jadi kita perlu fetch ulang data setelah operasi write
+        if (action !== 'read') {
+          await loadAllData();
+        }
+        
+        return { success: true };
+      } catch (error) {
+        console.error('Error:', error);
+        return { success: false, error: error.message };
+      } finally {
+        isLoading = false;
+      }
+    }
+
+    // Fungsi untuk load semua data dari Google Sheet
+    async function loadAllData() {
+      try {
+        const response = await fetch(GOOGLE_SHEET_URL + '?action=read');
+        const data = await response.json();
+        
+        if (data.success) {
+          allRecords = data.records || [];
+          
+          if (currentUser) {
+            userSessions = allRecords.filter(r => 
+              r.type === 'halaqah_config' && 
+              r.pembimbing_email === currentUser.email
+            );
+            
+            if (userSessions.length > 0 && !selectedSesi) {
+              selectedSesi = userSessions[0].nama_sesi;
+            }
+          }
+          
+          renderCurrentView();
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+        showToast('Gagal memuat data dari server');
+      }
+    }
+
+    // Fungsi untuk membuat data baru
+    async function createRecord(record) {
+      const result = await googleSheetRequest('create', record);
+      if (result.success) {
+        return { isOk: true };
+      } else {
+        return { isOk: false, error: result.error };
+      }
+    }
+
+    // Fungsi untuk update data
+    async function updateRecord(record) {
+      const result = await googleSheetRequest('update', record);
+      if (result.success) {
+        return { isOk: true };
+      } else {
+        return { isOk: false, error: result.error };
+      }
+    }
+
+    // Fungsi untuk delete data
+    async function deleteRecord(record) {
+      const result = await googleSheetRequest('delete', { id: record.id });
+      if (result.success) {
+        return { isOk: true };
+      } else {
+        return { isOk: false, error: result.error };
+      }
+    }
+
+    // Fungsi helper untuk menghitung total halaman dari data tahfidz
+    function calculateTotalPages(tahfidzRecords) {
+      let totalHalaman = 0;
+      tahfidzRecords.forEach(t => {
+        if (t.halaman) {
+          const halamanStr = t.halaman.toString().trim();
+          if (halamanStr.includes('-')) {
+            const parts = halamanStr.split('-').map(p => p.trim());
+            const start = parseInt(parts[0]) || 0;
+            const end = parseInt(parts[1]) || 0;
+            if (start > 0 && end >= start) {
+              totalHalaman += (end - start + 1);
+            }
+          } else {
+            const hal = parseInt(halamanStr);
+            if (hal > 0) totalHalaman += 1;
+          }
+        }
+      });
+      return totalHalaman;
+    }
+
+    async function initializeApp() {
+      await loadAllData();
+      renderCurrentView();
+    }
+
+    function renderCurrentView() {
+      const app = document.getElementById('app');
+      
+      if (!currentUser) {
+        if (currentView === 'login') {
+          app.innerHTML = renderLogin();
+        } else if (currentView === 'register') {
+          app.innerHTML = renderRegister();
+        }
+      } else {
+        if (currentView === 'dashboard') {
+          app.innerHTML = renderDashboard();
+        } else if (currentView === 'absensi') {
+          app.innerHTML = renderAbsensi();
+        } else if (currentView === 'tahfidz') {
+          app.innerHTML = renderTahfidz();
+        } else if (currentView === 'tahsin') {
+          app.innerHTML = renderTahsin();
+        } else if (currentView === 'yaumiyah') {
+          app.innerHTML = renderYaumiyah();
+        } else if (currentView === 'santri') {
+          app.innerHTML = renderSantri();
+        } else if (currentView === 'rapor') {
+          app.innerHTML = renderRapor();
+        } else if (currentView === 'laporan') {
+          app.innerHTML = renderLaporan();
+        } else if (currentView === 'config') {
+          app.innerHTML = renderConfig();
+        }
+      }
+    }
+
+    function renderLogin() {
+      return `
+        <div class="w-full h-full flex items-center justify-center fade-in" style="background: linear-gradient(135deg, #3b82f615, #1d4ed815); overflow: hidden;">
+          <div style="width: 100%; max-width: 400px; padding: 24px;">
+            <div style="text-align: center; margin-bottom: 32px;">
+              <img src="https://ypwi.or.id/assets/setting/front/meta/image.png" alt="Logo Ma'had" style="width: 64px; height: 64px; object-fit: contain; margin: 0 auto 16px;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+              <div style="font-size: 48px; margin-bottom: 12px; color: #3b82f6; display: none;"><i class="fas fa-book-quran"></i></div>
+              <h1 style="font-size: 24px; font-weight: 700; margin-bottom: 6px; color: #1e293b;">Sistem Manajemen Ketahfizan</h1>
+              <p style="color: #3b82f6; font-weight: 600; font-size: 13px; margin-bottom: 3px;">Ma'had Abu Bakar Ash-Shiddiq</p>
+              <p style="color: #1e293b; opacity: 0.6; font-size: 12px;">Anabanua, Kab. Wajo, Sulawesi Selatan</p>
+            </div>
+
+            <form id="login-form" onsubmit="handleLogin(event)" style="display: flex; flex-direction: column; gap: 16px;">
+              <div>
+                <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 6px; font-size: 14px;">Email Pembimbing</label>
+                <input type="email" id="login-email" required placeholder="pembimbing@email.com" class="input-field" style="padding: 10px;">
+              </div>
+
+              <div>
+                <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 6px; font-size: 14px;">Password</label>
+                <input type="password" id="login-password" required placeholder="••••••••" class="input-field" style="padding: 10px;">
+              </div>
+
+              <button type="submit" id="login-submit" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 14px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 15px; margin-top: 8px;">
+                Masuk
+              </button>
+
+              <div style="text-align: center; color: #1e293b; font-size: 14px;">
+                Belum punya akun? 
+                <a onclick="navigateTo('register')" style="color: #3b82f6; font-weight: 600; cursor: pointer; text-decoration: underline;">Daftar di sini</a>
+              </div>
+            </form>
+            
+            <div style="text-align: center; margin-top: 32px;">
+              <p style="color: #1e293b; opacity: 0.5; font-size: 12px;">Created by <strong style="font-weight: 700;">Muzanni</strong></p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderRegister() {
+      return `
+        <div class="w-full h-full flex items-center justify-center fade-in" style="background: linear-gradient(135deg, #3b82f615, #1d4ed815); overflow: hidden;">
+          <div style="width: 100%; max-width: 400px; padding: 24px;">
+            <div style="text-align: center; margin-bottom: 28px;">
+              <img src="https://ypwi.or.id/assets/setting/front/meta/image.png" alt="Logo Ma'had" style="width: 56px; height: 56px; object-fit: contain; margin: 0 auto 12px;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+              <div style="font-size: 40px; margin-bottom: 8px; color: #3b82f6; display: none;"><i class="fas fa-user-plus"></i></div>
+              <h1 style="font-size: 22px; font-weight: 700; margin-bottom: 6px; color: #1e293b;">Daftar Akun Pembimbing</h1>
+              <p style="color: #3b82f6; font-weight: 600; font-size: 12px; margin-bottom: 2px;">Ma'had Abu Bakar Ash-Shiddiq</p>
+              <p style="color: #1e293b; opacity: 0.6; font-size: 11px;">Anabanua, Kab. Wajo, Sulawesi Selatan</p>
+            </div>
+
+            <form id="register-form" onsubmit="handleRegister(event)" style="display: flex; flex-direction: column; gap: 14px;">
+              <div>
+                <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 5px; font-size: 13px;">Nama Lengkap</label>
+                <input type="text" id="register-nama" required placeholder="Nama pembimbing" class="input-field" style="padding: 9px; font-size: 14px;">
+              </div>
+
+              <div>
+                <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 5px; font-size: 13px;">Email</label>
+                <input type="email" id="register-email" required placeholder="pembimbing@email.com" class="input-field" style="padding: 9px; font-size: 14px;">
+              </div>
+
+              <div>
+                <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 5px; font-size: 13px;">Password</label>
+                <input type="password" id="register-password" required placeholder="Minimal 6 karakter" minlength="6" class="input-field" style="padding: 9px; font-size: 14px;">
+              </div>
+
+              <div>
+                <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 5px; font-size: 13px;">ID Halaqah</label>
+                <input type="text" id="register-halaqah" required placeholder="Contoh: HLQ001" class="input-field" style="padding: 9px; font-size: 14px;">
+              </div>
+
+              <button type="submit" id="register-submit" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 12px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 15px; margin-top: 6px;">
+                Daftar Akun
+              </button>
+
+              <div style="text-align: center; color: #1e293b; font-size: 13px;">
+                Sudah punya akun? 
+                <a onclick="navigateTo('login')" style="color: #3b82f6; font-weight: 600; cursor: pointer; text-decoration: underline;">Masuk di sini</a>
+              </div>
+            </form>
+            
+            <div style="text-align: center; margin-top: 24px;">
+              <p style="color: #1e293b; opacity: 0.5; font-size: 11px;">Created by <strong style="font-weight: 700;">Muzanni</strong></p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderDashboard() {
+      const mySantri = allRecords.filter(r => r.type === 'santri' && r.pembimbing_email === currentUser.email);
+      const todayAbsensi = allRecords.filter(r => 
+        r.type === 'absensi' && 
+        r.tanggal === selectedDate && 
+        r.input_by === currentUser.email
+      );
+      const totalData = allRecords.filter(r => r.input_by === currentUser.email).length;
+      
+      return `
+        <div class="w-full h-full flex">
+          ${renderSidebar('dashboard')}
+
+          <div class="fade-in" style="flex: 1; overflow-y: auto; background: #f8fafc;">
+            <div style="background: white; padding: 20px 32px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h1 style="color: #1e293b; font-size: 24px; font-weight: 700; margin-bottom: 4px;">Dashboard Overview</h1>
+                <p style="color: #1e293b; opacity: 0.6; font-size: 14px;">Selamat datang kembali, ${currentUser.nama}</p>
+              </div>
+              <div style="display: flex; align-items: center; gap: 16px;">
+                <div style="padding: 8px 16px; background: #f8fafc; border-radius: 8px;">
+                  <i class="fas fa-calendar" style="color: #3b82f6; margin-right: 8px;"></i>
+                  <span style="color: #1e293b; font-size: 14px; font-weight: 500;">${new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="padding: 32px;">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="card-hover" style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid #3b82f6;">
+                  <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+                    <div>
+                      <p style="color: #1e293b; opacity: 0.6; font-size: 14px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Total Santri</p>
+                      <p style="color: #1e293b; font-size: 36px; font-weight: 700;">${mySantri.length}</p>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #3b82f620, #1d4ed820); width: 56px; height: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #3b82f6;">
+                      <i class="fas fa-users"></i>
+                    </div>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="color: #10b981; font-size: 14px; font-weight: 600;"><i class="fas fa-arrow-up"></i> 100%</span>
+                    <span style="color: #1e293b; opacity: 0.5; font-size: 14px;">Terdaftar aktif</span>
+                  </div>
+                </div>
+
+                <div class="card-hover" style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid #10b981;">
+                  <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+                    <div>
+                      <p style="color: #1e293b; opacity: 0.6; font-size: 14px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Setoran Hari Ini</p>
+                      <p style="color: #1e293b; font-size: 36px; font-weight: 700;">${todayAbsensi.length}</p>
+                    </div>
+                    <div style="background: #10b98120; width: 56px; height: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #10b981;">
+                      <i class="fas fa-clipboard-check"></i>
+                    </div>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="color: #10b981; font-size: 14px; font-weight: 600;"><i class="fas fa-check-circle"></i> Aktif</span>
+                    <span style="color: #1e293b; opacity: 0.5; font-size: 14px;">Data hari ini</span>
+                  </div>
+                </div>
+
+                <div class="card-hover" style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid #f59e0b;">
+                  <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+                    <div>
+                      <p style="color: #1e293b; opacity: 0.6; font-size: 14px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Total Data</p>
+                      <p style="color: #1e293b; font-size: 36px; font-weight: 700;">${totalData}</p>
+                    </div>
+                    <div style="background: #f59e0b20; width: 56px; height: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #f59e0b;">
+                      <i class="fas fa-database"></i>
+                    </div>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="color: #f59e0b; font-size: 14px; font-weight: 600;"><i class="fas fa-info-circle"></i> Tersimpan</span>
+                    <span style="color: #1e293b; opacity: 0.5; font-size: 14px;">di Google Sheet</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 24px;">
+                <h3 style="color: #1e293b; font-size: 18px; font-weight: 700; margin-bottom: 16px;">
+                  <i class="fas fa-bolt" style="color: #3b82f6; margin-right: 8px;"></i>
+                  Quick Actions
+                </h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  ${renderQuickAction('<i class="fas fa-user-check"></i>', 'Input Absensi', 'absensi', '#3b82f6')}
+                  ${renderQuickAction('<i class="fas fa-book-quran"></i>', 'Penilaian Tahfidz', 'tahfidz', '#10b981')}
+                  ${renderQuickAction('<i class="fas fa-file-alt"></i>', 'Rapor Semester', 'rapor', '#ef4444')}
+                  ${renderQuickAction('<i class="fas fa-chart-line"></i>', 'Lihat Laporan', 'laporan', '#8b5cf6')}
+                </div>
+              </div>
+
+              <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                <h3 style="color: #1e293b; font-size: 18px; font-weight: 700; margin-bottom: 16px;">
+                  <i class="fas fa-history" style="color: #3b82f6; margin-right: 8px;"></i>
+                  Aktivitas Terbaru
+                </h3>
+                ${allRecords.filter(r => r.input_by === currentUser.email && r.type !== 'santri' && r.type !== 'halaqah_config').length === 0 ? `
+                  <div style="text-align: center; padding: 48px; color: #1e293b; opacity: 0.5;">
+                    <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 16px; color: #3b82f6;"></i>
+                    <p>Belum ada aktivitas terbaru</p>
+                  </div>
+                ` : `
+                  <div style="display: flex; flex-direction: column; gap: 12px;">
+                    ${allRecords.filter(r => r.input_by === currentUser.email && r.type !== 'santri' && r.type !== 'halaqah_config').slice(0, 5).map(record => {
+                      let icon = 'fa-circle';
+                      let color = '#3b82f6';
+                      let desc = '';
+                      
+                      if (record.type === 'absensi') {
+                        icon = 'fa-user-check';
+                        color = '#10b981';
+                        desc = `Absensi ${record.status} - ${record.sesi || ''}`;
+                      } else if (record.type === 'tahfidz') {
+                        icon = 'fa-book-quran';
+                        color = '#3b82f6';
+                        desc = `Tahfidz Juz ${record.juz || ''} - Nilai ${record.nilai || ''}`;
+                      } else if (record.type === 'tahsin') {
+                        icon = 'fa-star';
+                        color = '#f59e0b';
+                        desc = `Tahsin ${record.kategori || ''} - Nilai ${record.nilai || ''}`;
+                      } else if (record.type === 'yaumiyah') {
+                        icon = 'fa-tasks';
+                        color = '#8b5cf6';
+                        desc = 'Mutabaah Yaumiyah';
+                      }
+                      
+                      return `
+                        <div style="display: flex; align-items: center; gap: 16px; padding: 12px; background: #f8fafc; border-radius: 8px;">
+                          <div style="background: ${color}20; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: ${color};">
+                            <i class="fas ${icon}"></i>
+                          </div>
+                          <div style="flex: 1;">
+                            <p style="color: #1e293b; font-weight: 600; margin-bottom: 2px;">${desc}</p>
+                            <p style="color: #1e293b; opacity: 0.5; font-size: 12px;">${record.santri_id || ''} • ${record.tanggal || ''}</p>
+                          </div>
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
+                `}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSidebar(activeView) {
+      return `
+        <div style="width: 80px; background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%); display: flex; flex-direction: column; box-shadow: 4px 0 12px rgba(0,0,0,0.1); height: 100%;">
+          <div style="text-align: center; padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center;">
+            <img src="https://ypwi.or.id/assets/setting/front/meta/image.png" alt="Logo Pondok" style="width: 48px; height: 48px; object-fit: contain; border-radius: 8px;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <div style="font-size: 32px; color: white; display: none;"><i class="fas fa-book-quran"></i></div>
+          </div>
+
+          <nav style="flex: 1; display: flex; flex-direction: column; gap: 4px; padding: 12px 8px; overflow-y: auto;">
+            ${renderSidebarItem('<i class="fas fa-home"></i>', 'Dashboard', 'dashboard', activeView === 'dashboard')}
+            ${renderSidebarItem('<i class="fas fa-user-check"></i>', 'Absensi', 'absensi', activeView === 'absensi')}
+            ${renderSidebarItem('<i class="fas fa-book-quran"></i>', 'Tahfidz', 'tahfidz', activeView === 'tahfidz')}
+            ${renderSidebarItem('<i class="fas fa-star"></i>', 'Tahsin', 'tahsin', activeView === 'tahsin')}
+            ${renderSidebarItem('<i class="fas fa-tasks"></i>', 'Yaumiyah', 'yaumiyah', activeView === 'yaumiyah')}
+            ${renderSidebarItem('<i class="fas fa-user-graduate"></i>', 'Santri', 'santri', activeView === 'santri')}
+            ${renderSidebarItem('<i class="fas fa-file-alt"></i>', 'Rapor', 'rapor', activeView === 'rapor')}
+            ${renderSidebarItem('<i class="fas fa-cog"></i>', 'Atur Sesi', 'config', activeView === 'config')}
+            ${renderSidebarItem('<i class="fas fa-chart-line"></i>', 'Laporan', 'laporan', activeView === 'laporan')}
+          </nav>
+
+          <div style="padding: 12px 8px; border-top: 1px solid rgba(255,255,255,0.2);">
+            <button onclick="handleLogout()" title="Keluar" style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid white; background: transparent; color: white; cursor: pointer; font-weight: 600; transition: all 0.2s; font-size: 18px;">
+              <i class="fas fa-sign-out-alt"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSidebarItem(icon, label, view, active) {
+      return `
+        <a onclick="navigateTo('${view}')" title="${label}" style="display: flex; align-items: center; justify-content: center; padding: 10px; border-radius: 8px; cursor: pointer; transition: all 0.2s; background: ${active ? 'rgba(255,255,255,0.2)' : 'transparent'}; color: white; text-decoration: none; font-size: 20px;">
+          ${icon}
+        </a>
+      `;
+    }
+
+    function renderQuickAction(icon, label, view, color) {
+      return `
+        <div onclick="navigateTo('${view}')" class="card-hover" style="background: ${color}10; border: 2px solid ${color}30; border-radius: 12px; padding: 20px; cursor: pointer; text-align: center;">
+          <div style="font-size: 32px; color: ${color}; margin-bottom: 12px;">${icon}</div>
+          <p style="color: ${color}; font-weight: 600; font-size: 14px;">${label}</p>
+        </div>
+      `;
+    }
+
+    function renderConfig() {
+      return `
+        <div class="w-full h-full flex">
+          ${renderSidebar('config')}
+          <div class="fade-in" style="flex: 1; overflow-y: auto; background: #f8fafc;">
+            <div class="p-4 md:p-8">
+              <div class="max-w-6xl mx-auto">
+            <div style="background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 24px;">
+              <h2 style="color: #1e293b; font-size: 28px; font-weight: 700; margin-bottom: 8px;">Tambah Sesi Halaqah</h2>
+              <p style="color: #1e293b; opacity: 0.6; margin-bottom: 24px;">Atur jadwal sesi pembelajaran (maksimal 6 sesi)</p>
+
+              ${userSessions.length >= 6 ? `
+                <div style="padding: 16px; background: #fef2f2; border: 2px solid #fca5a5; border-radius: 8px; color: #dc2626; margin-bottom: 24px;">
+                  ⚠️ Maksimal 6 sesi telah tercapai. Hapus sesi yang ada untuk menambah yang baru.
+                </div>
+              ` : ''}
+
+              <form id="config-form" onsubmit="submitConfig(event)" style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 16px; align-items: end;">
+                <div>
+                  <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Nama Sesi</label>
+                  <input type="text" id="config-sesi" required placeholder="Contoh: Sesi 1, Ba'da Subuh" class="input-field" ${userSessions.length >= 6 ? 'disabled' : ''}>
+                </div>
+
+                <div>
+                  <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Jam Mulai</label>
+                  <input type="time" id="config-mulai" required class="input-field" ${userSessions.length >= 6 ? 'disabled' : ''}>
+                </div>
+
+                <div>
+                  <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Jam Selesai</label>
+                  <input type="time" id="config-selesai" required class="input-field" ${userSessions.length >= 6 ? 'disabled' : ''}>
+                </div>
+
+                <button type="submit" id="config-submit" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 12px 24px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; grid-column: span 3;" ${userSessions.length >= 6 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
+                  Tambah Sesi
+                </button>
+              </form>
+            </div>
+
+            <div style="background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+              <h3 style="color: #1e293b; font-size: 24px; font-weight: 700; margin-bottom: 16px;">Daftar Sesi (${userSessions.length}/6)</h3>
+              
+              ${userSessions.length === 0 ? `
+                <div style="text-align: center; padding: 48px 24px; color: #1e293b; opacity: 0.5;">
+                  <p style="font-size: 48px; margin-bottom: 16px; color: #3b82f6;"><i class="fas fa-clock"></i></p>
+                  <p style="font-size: 18px;">Belum ada sesi terdaftar</p>
+                </div>
+              ` : `
+                <div style="display: grid; gap: 12px;">
+                  ${userSessions.map(sesi => `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: #f8fafc; border-radius: 8px;">
+                      <div>
+                        <p style="color: #1e293b; font-weight: 600; font-size: 16px; margin-bottom: 4px;">${sesi.nama_sesi}</p>
+                        <p style="color: #1e293b; opacity: 0.6; font-size: 14px;">${sesi.jam_mulai} - ${sesi.jam_selesai}</p>
+                      </div>
+                      <button onclick="deleteConfig('${sesi.id}')" style="padding: 8px 16px; border-radius: 6px; border: 2px solid #ef4444; background: white; color: #ef4444; cursor: pointer; font-weight: 600;">
+                        Hapus
+                      </button>
+                    </div>
+                  `).join('')}
+                </div>
+              `}
+            </div>
+          </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAbsensi() {
+      const mySantri = allRecords.filter(r => r.type === 'santri' && r.pembimbing_email === currentUser.email);
+      
+      if (userSessions.length === 0) {
+        return `
+          <div class="w-full h-full flex">
+            ${renderSidebar('absensi')}
+            <div class="fade-in" style="flex: 1; overflow-y: auto; background: #f8fafc;">
+              <div class="p-4 md:p-8">
+                <div class="max-w-6xl mx-auto">
+              <div style="background: white; border-radius: 16px; padding: 48px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <div style="font-size: 64px; margin-bottom: 16px; color: #3b82f6;"><i class="fas fa-cogs"></i></div>
+                <h2 style="color: #1e293b; font-size: 24px; font-weight: 700; margin-bottom: 8px;">Konfigurasi Sesi Diperlukan</h2>
+                <p style="color: #1e293b; opacity: 0.6; margin-bottom: 24px;">Silakan tambahkan sesi halaqah terlebih dahulu di menu Konfigurasi Sesi</p>
+                <button onclick="navigateTo('config')" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 16px 32px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600;">
+                  Atur Sesi Sekarang
+                </button>
+              </div>
+            </div>
+          </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      return `
+        <div class="w-full h-full flex">
+          ${renderSidebar('absensi')}
+          <div class="fade-in" style="flex: 1; overflow-y: auto; background: #f8fafc;">
+            <div class="p-4 md:p-8">
+              <div class="max-w-6xl mx-auto">
+            <div style="background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+              <h2 style="color: #1e293b; font-size: 28px; font-weight: 700; margin-bottom: 8px;">Absensi Kelas</h2>
+              <p style="color: #1e293b; opacity: 0.6; margin-bottom: 24px;">Catat kehadiran santri per sesi halaqah</p>
+
+              <div style="margin-bottom: 24px;">
+                <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Tanggal</label>
+                <input type="date" id="absensi-tanggal" value="${selectedDate}" onchange="updateDate(this.value)" class="input-field">
+              </div>
+
+              <div style="margin-bottom: 24px;">
+                <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 12px;">Pilih Sesi</label>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  ${userSessions.map(sesi => `
+                    <button class="tab-button ${selectedSesi === sesi.nama_sesi ? 'active' : ''}" onclick="selectSesi('${sesi.nama_sesi}')" style="padding: 12px 24px; border-radius: 8px; border: 2px solid #3b82f6; background: ${selectedSesi === sesi.nama_sesi ? `linear-gradient(135deg, #3b82f6, #1d4ed8)` : 'white'}; color: ${selectedSesi === sesi.nama_sesi ? 'white' : '#3b82f6'}; cursor: pointer; font-weight: 600;">
+                      ${sesi.nama_sesi}
+                    </button>
+                  `).join('')}
+                </div>
+              </div>
+
+              ${mySantri.length === 0 ? `
+                <div style="text-align: center; padding: 48px 24px; color: #1e293b; opacity: 0.5;">
+                  <p style="font-size: 48px; margin-bottom: 16px; color: #3b82f6;"><i class="fas fa-users"></i></p>
+                  <p style="font-size: 18px;">Belum ada data santri. Silakan tambahkan santri terlebih dahulu.</p>
+                </div>
+              ` : `
+                <div style="overflow-x: auto;">
+                  <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                      <tr style="background: #f8fafc;">
+                        <th style="padding: 16px; text-align: left; color: #1e293b; font-weight: 600; border-bottom: 2px solid #e2e8f0;">NIS</th>
+                        <th style="padding: 16px; text-align: left; color: #1e293b; font-weight: 600; border-bottom: 2px solid #e2e8f0;">Nama Santri</th>
+                        <th style="padding: 16px; text-align: left; color: #1e293b; font-weight: 600; border-bottom: 2px solid #e2e8f0;">Kelas</th>
+                        <th style="padding: 16px; text-align: center; color: #1e293b; font-weight: 600; border-bottom: 2px solid #e2e8f0;">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${mySantri.map(santri => {
+                        const existingAbsensi = allRecords.find(r => 
+                          r.type === 'absensi' && 
+                          r.santri_id === santri.nis &&
+                          r.tanggal === selectedDate &&
+                          r.sesi === selectedSesi
+                        );
+                        const currentStatus = existingAbsensi ? existingAbsensi.status : '';
+                        
+                        return `
+                          <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 16px; color: #1e293b;">${santri.nis}</td>
+                            <td style="padding: 16px; color: #1e293b;">${santri.santri_nama}</td>
+                            <td style="padding: 16px; color: #1e293b;">${santri.kelas}</td>
+                            <td style="padding: 16px;">
+                              <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+                                ${['Hadir', 'Sakit', 'Izin', 'TK'].map(status => `
+                                  <button onclick="markAbsensi('${santri.nis}', '${status}')" style="padding: 8px 16px; border-radius: 6px; border: 2px solid ${currentStatus === status ? '#3b82f6' : '#e2e8f0'}; background: ${currentStatus === status ? '#3b82f6' : 'white'}; color: ${currentStatus === status ? 'white' : '#1e293b'}; cursor: pointer; font-weight: ${currentStatus === status ? '600' : '400'}; font-size: 14px;">
+                                    ${status}
+                                  </button>
+                                `).join('')}
+                              </div>
+                            </td>
+                          </tr>
+                        `;
+                      }).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              `}
+            </div>
+          </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderTahfidz() {
+      const mySantri = allRecords.filter(r => r.type === 'santri' && r.pembimbing_email === currentUser.email);
+      
+      return `
+        <div class="w-full h-full flex">
+          ${renderSidebar('tahfidz')}
+          <div class="fade-in" style="flex: 1; overflow-y: auto; background: #f8fafc;">
+            <div class="p-4 md:p-8">
+              <div class="max-w-4xl mx-auto">
+            <div style="background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+              <h2 style="color: #1e293b; font-size: 28px; font-weight: 700; margin-bottom: 8px;">Penilaian Tahfidz</h2>
+              <p style="color: #1e293b; opacity: 0.6; margin-bottom: 24px;">Input hafalan Al-Quran santri</p>
+
+              <form id="tahfidz-form" onsubmit="submitTahfidz(event)" style="display: flex; flex-direction: column; gap: 20px;">
+                <div>
+                  <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Nama Santri</label>
+                  <select id="tahfidz-santri" required class="input-field">
+                    <option value="">Pilih Santri</option>
+                    ${mySantri.map(s => `<option value="${s.nis}">${s.santri_nama} (${s.nis}) - ${s.kelas}</option>`).join('')}
+                  </select>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                  <div>
+                    <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Juz</label>
+                    <input type="text" id="tahfidz-juz" required placeholder="Contoh: 1, 2, 30" class="input-field">
+                  </div>
+                  <div>
+                    <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Halaman</label>
+                    <input type="text" id="tahfidz-halaman" required placeholder="1-10" class="input-field">
+                  </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                  <div>
+                    <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Surah</label>
+                    <input type="text" id="tahfidz-surah" required placeholder="Nama surah" class="input-field">
+                  </div>
+                  <div>
+                    <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Ayat</label>
+                    <input type="text" id="tahfidz-ayat" required placeholder="1-10" class="input-field">
+                  </div>
+                </div>
+
+                <div>
+                  <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Nilai</label>
+                  <select id="tahfidz-nilai" required class="input-field">
+                    <option value="">Pilih Nilai</option>
+                    <option value="A">A - Sangat Lancar</option>
+                    <option value="B">B - Lancar</option>
+                    <option value="C">C - Cukup</option>
+                    <option value="D">D - Kurang</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Catatan</label>
+                  <textarea id="tahfidz-catatan" rows="3" placeholder="Catatan tambahan (opsional)" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px; resize: vertical;"></textarea>
+                </div>
+
+                <button type="submit" id="tahfidz-submit" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 16px;">
+                  Simpan Penilaian
+                </button>
+              </form>
+            </div>
+          </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderTahsin() {
+      const mySantri = allRecords.filter(r => r.type === 'santri' && r.pembimbing_email === currentUser.email);
+      
+      return `
+        <div class="w-full h-full flex">
+          ${renderSidebar('tahsin')}
+          <div class="fade-in" style="flex: 1; overflow-y: auto; background: #f8fafc;">
+            <div class="p-4 md:p-8">
+              <div class="max-w-4xl mx-auto">
+            <div style="background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+              <h2 style="color: #1e293b; font-size: 28px; font-weight: 700; margin-bottom: 8px;">Penilaian Tahsin</h2>
+              <p style="color: #1e293b; opacity: 0.6; margin-bottom: 24px;">Evaluasi bacaan Al-Quran santri</p>
+
+              <form id="tahsin-form" onsubmit="submitTahsin(event)" style="display: flex; flex-direction: column; gap: 20px;">
+                <div>
+                  <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Nama Santri</label>
+                  <select id="tahsin-santri" required class="input-field">
+                    <option value="">Pilih Santri</option>
+                    ${mySantri.map(s => `<option value="${s.nis}">${s.santri_nama} (${s.nis}) - ${s.kelas}</option>`).join('')}
+                  </select>
+                </div>
+
+                <div>
+                  <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Kategori Penilaian</label>
+                  <select id="tahsin-kategori" required class="input-field">
+                    <option value="">Pilih Kategori</option>
+                    <option value="Makhorijul Huruf">Makhorijul Huruf</option>
+                    <option value="Tajwid">Tajwid</option>
+                    <option value="Kelancaran">Kelancaran</option>
+                    <option value="Adab">Adab</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Nilai</label>
+                  <select id="tahsin-nilai" required class="input-field">
+                    <option value="">Pilih Nilai</option>
+                    <option value="A">A - Sangat Baik</option>
+                    <option value="B">B - Baik</option>
+                    <option value="C">C - Cukup</option>
+                    <option value="D">D - Perlu Perbaikan</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Catatan</label>
+                  <textarea id="tahsin-catatan" rows="3" placeholder="Catatan evaluasi (opsional)" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px; resize: vertical;"></textarea>
+                </div>
+
+                <button type="submit" id="tahsin-submit" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 16px;">
+                  Simpan Penilaian
+                </button>
+              </form>
+            </div>
+          </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderYaumiyah() {
+      const mySantri = allRecords.filter(r => r.type === 'santri' && r.pembimbing_email === currentUser.email);
+      
+      return `
+        <div class="w-full h-full flex">
+          ${renderSidebar('yaumiyah')}
+          <div class="fade-in" style="flex: 1; overflow-y: auto; background: #f8fafc;">
+            <div class="p-4 md:p-8">
+              <div class="max-w-4xl mx-auto">
+            <div style="background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+              <h2 style="color: #1e293b; font-size: 28px; font-weight: 700; margin-bottom: 8px;">Mutabaah Yaumiyah</h2>
+              <p style="color: #1e293b; opacity: 0.6; margin-bottom: 24px;">Pantau ibadah harian santri</p>
+
+              <form id="yaumiyah-form" onsubmit="submitYaumiyah(event)" style="display: flex; flex-direction: column; gap: 24px;">
+                <div>
+                  <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Nama Santri</label>
+                  <select id="yaumiyah-santri" required class="input-field">
+                    <option value="">Pilih Santri</option>
+                    ${mySantri.map(s => `<option value="${s.nis}">${s.santri_nama} (${s.nis}) - ${s.kelas}</option>`).join('')}
+                  </select>
+                </div>
+
+                <div>
+                  <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Tanggal</label>
+                  <input type="date" id="yaumiyah-tanggal" value="${selectedDate}" required class="input-field">
+                </div>
+
+                <div>
+                  <h3 style="color: #1e293b; font-weight: 600; margin-bottom: 16px; font-size: 18px;">Checklist Ibadah</h3>
+                  
+                  <div style="display: grid; gap: 12px;">
+                    <label style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; background: #f8fafc; cursor: pointer;">
+                      <input type="checkbox" id="shalat-subuh" class="checkbox-custom">
+                      <span style="color: #1e293b; font-size: 16px;">Shalat Subuh</span>
+                    </label>
+
+                    <label style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; background: #f8fafc; cursor: pointer;">
+                      <input type="checkbox" id="shalat-dzuhur" class="checkbox-custom">
+                      <span style="color: #1e293b; font-size: 16px;">Shalat Dzuhur</span>
+                    </label>
+
+                    <label style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; background: #f8fafc; cursor: pointer;">
+                      <input type="checkbox" id="shalat-ashar" class="checkbox-custom">
+                      <span style="color: #1e293b; font-size: 16px;">Shalat Ashar</span>
+                    </label>
+
+                    <label style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; background: #f8fafc; cursor: pointer;">
+                      <input type="checkbox" id="shalat-maghrib" class="checkbox-custom">
+                      <span style="color: #1e293b; font-size: 16px;">Shalat Maghrib</span>
+                    </label>
+
+                    <label style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; background: #f8fafc; cursor: pointer;">
+                      <input type="checkbox" id="shalat-isya" class="checkbox-custom">
+                      <span style="color: #1e293b; font-size: 16px;">Shalat Isya</span>
+                    </label>
+
+                    <label style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; background: #f8fafc; cursor: pointer;">
+                      <input type="checkbox" id="rawatib" class="checkbox-custom">
+                      <span style="color: #1e293b; font-size: 16px;">Shalat Rawatib</span>
+                    </label>
+
+                    <label style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; background: #f8fafc; cursor: pointer;">
+                      <input type="checkbox" id="dhuha" class="checkbox-custom">
+                      <span style="color: #1e293b; font-size: 16px;">Shalat Dhuha</span>
+                    </label>
+
+                    <label style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; background: #f8fafc; cursor: pointer;">
+                      <input type="checkbox" id="lail" class="checkbox-custom">
+                      <span style="color: #1e293b; font-size: 16px;">Shalat Lail</span>
+                    </label>
+
+                    <label style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; background: #f8fafc; cursor: pointer;">
+                      <input type="checkbox" id="puasa-sunnah" class="checkbox-custom">
+                      <span style="color: #1e293b; font-size: 16px;">Puasa Sunnah</span>
+                    </label>
+
+                    <label style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; background: #f8fafc; cursor: pointer;">
+                      <input type="checkbox" id="dzikir" class="checkbox-custom">
+                      <span style="color: #1e293b; font-size: 16px;">Dzikir Pagi-Petang</span>
+                    </label>
+
+                    <label style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; background: #f8fafc; cursor: pointer;">
+                      <input type="checkbox" id="hafalan-hadits" class="checkbox-custom">
+                      <span style="color: #1e293b; font-size: 16px;">Hafalan Hadits</span>
+                    </label>
+                  </div>
+                </div>
+
+                <button type="submit" id="yaumiyah-submit" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 16px;">
+                  Simpan Aktivitas
+                </button>
+              </form>
+            </div>
+          </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSantri() {
+      const mySantri = allRecords.filter(r => r.type === 'santri' && r.pembimbing_email === currentUser.email);
+      
+      return `
+        <div class="w-full h-full flex">
+          ${renderSidebar('santri')}
+          <div class="fade-in" style="flex: 1; overflow-y: auto; background: #f8fafc;">
+            <div class="p-4 md:p-8">
+              <div class="max-w-6xl mx-auto">
+            <div style="background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 24px;">
+              <h2 style="color: #1e293b; font-size: 28px; font-weight: 700; margin-bottom: 8px;">Tambah Santri Baru</h2>
+              <p style="color: #1e293b; opacity: 0.6; margin-bottom: 24px;">Daftarkan santri baru ke halaqah Anda</p>
+
+              <form id="santri-form" onsubmit="submitSantri(event)" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; align-items: end;">
+                <div>
+                  <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">NIS</label>
+                  <input type="text" id="santri-nis" required placeholder="Nomor Induk" class="input-field">
+                </div>
+
+                <div>
+                  <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Nama Lengkap</label>
+                  <input type="text" id="santri-nama" required placeholder="Nama santri" class="input-field">
+                </div>
+
+                <div>
+                  <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Kelas</label>
+                  <input type="text" id="santri-kelas" required placeholder="Contoh: 1A, 2B" class="input-field">
+                </div>
+
+                <button type="submit" id="santri-submit" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 12px 24px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; grid-column: span 3;">
+                  Tambah Santri
+                </button>
+              </form>
+            </div>
+
+            <div style="background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+              <h3 style="color: #1e293b; font-size: 24px; font-weight: 700; margin-bottom: 16px;">Daftar Santri</h3>
+              
+              ${mySantri.length === 0 ? `
+                <div style="text-align: center; padding: 48px 24px; color: #1e293b; opacity: 0.5;">
+                  <p style="font-size: 48px; margin-bottom: 16px; color: #3b82f6;"><i class="fas fa-user-graduate"></i></p>
+                  <p style="font-size: 18px;">Belum ada santri terdaftar</p>
+                </div>
+              ` : `
+                <div style="overflow-x: auto;">
+                  <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                      <tr style="background: #f8fafc;">
+                        <th style="padding: 16px; text-align: left; color: #1e293b; font-weight: 600; border-bottom: 2px solid #e2e8f0;">No</th>
+                        <th style="padding: 16px; text-align: left; color: #1e293b; font-weight: 600; border-bottom: 2px solid #e2e8f0;">NIS</th>
+                        <th style="padding: 16px; text-align: left; color: #1e293b; font-weight: 600; border-bottom: 2px solid #e2e8f0;">Nama Lengkap</th>
+                        <th style="padding: 16px; text-align: left; color: #1e293b; font-weight: 600; border-bottom: 2px solid #e2e8f0;">Kelas</th>
+                        <th style="padding: 16px; text-align: center; color: #1e293b; font-weight: 600; border-bottom: 2px solid #e2e8f0;">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${mySantri.map((santri, idx) => `
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                          <td style="padding: 16px; color: #1e293b;">${idx + 1}</td>
+                          <td style="padding: 16px; color: #1e293b;">${santri.nis}</td>
+                          <td style="padding: 16px; color: #1e293b;">${santri.santri_nama}</td>
+                          <td style="padding: 16px; color: #1e293b;">${santri.kelas}</td>
+                          <td style="padding: 16px; text-align: center;">
+                            <button onclick="deleteSantri('${santri.id}')" style="padding: 8px 16px; border-radius: 6px; border: 2px solid #ef4444; background: white; color: #ef4444; cursor: pointer; font-weight: 600;">
+                              Hapus
+                            </button>
+                          </td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              `}
+            </div>
+          </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderRapor() {
+      const mySantri = allRecords.filter(r => r.type === 'santri' && r.pembimbing_email === currentUser.email);
+      const raporRecords = allRecords.filter(r => r.type === 'rapor' && r.pembimbing_email === currentUser.email);
+      
+      return `
+        <div class="w-full h-full flex">
+          ${renderSidebar('rapor')}
+          <div class="fade-in" style="flex: 1; overflow-y: auto; background: #f8fafc;">
+            <div class="p-4 md:p-8">
+              <div class="max-w-6xl mx-auto">
+            
+            <div style="background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 24px;">
+              <h2 style="color: #1e293b; font-size: 28px; font-weight: 700; margin-bottom: 8px;">Input Rapor Semester</h2>
+              <p style="color: #1e293b; opacity: 0.6; margin-bottom: 24px;">Buat rapor semester untuk santri</p>
+
+              <form id="rapor-form" onsubmit="submitRapor(event)" style="display: flex; flex-direction: column; gap: 20px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+                  <div>
+                    <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Nama Santri</label>
+                    <select id="rapor-santri" required class="input-field" onchange="loadSantriData()">
+                      <option value="">Pilih Santri</option>
+                      ${mySantri.map(s => `<option value="${s.nis}">${s.santri_nama} (${s.nis})</option>`).join('')}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Semester</label>
+                    <select id="rapor-semester" required class="input-field" onchange="loadSantriData()">
+                      <option value="">Pilih Semester</option>
+                      <option value="Ganjil">Ganjil</option>
+                      <option value="Genap">Genap</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Tahun Ajaran</label>
+                    <input type="text" id="rapor-tahun" required placeholder="Contoh: 2024/2025" class="input-field">
+                  </div>
+                </div>
+
+                <div style="padding: 20px; background: #f8fafc; border-radius: 12px; border: 2px solid #3b82f630;">
+                  <h3 style="color: #1e293b; font-weight: 700; margin-bottom: 16px; font-size: 18px;">
+                    <i class="fas fa-calculator" style="color: #3b82f6;"></i> Data Otomatis (Berdasarkan Semester)
+                  </h3>
+                  <div id="rapor-info"></div>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px;">
+                    <div>
+                      <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Total Hafalan (Halaman)</label>
+                      <input type="number" id="rapor-hafalan" readonly class="input-field" style="background: #f8fafc;">
+                    </div>
+                    <div>
+                      <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Rata-rata Kehadiran (%)</label>
+                      <input type="number" id="rapor-kehadiran" readonly class="input-field" style="background: #f8fafc;">
+                    </div>
+                    <div>
+                      <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Rata-rata Mutabaah (%)</label>
+                      <input type="number" id="rapor-mutabaah" readonly class="input-field" style="background: #f8fafc;">
+                    </div>
+                    <div>
+                      <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Nilai Tahsin</label>
+                      <input type="text" id="rapor-tahsin" readonly class="input-field" style="background: #f8fafc;">
+                    </div>
+                  </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                  <div>
+                    <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Nilai Tahfidz</label>
+                    <select id="rapor-nilai-tahfidz" required class="input-field">
+                      <option value="">Pilih Nilai</option>
+                      <option value="A">A - Sangat Baik</option>
+                      <option value="B">B - Baik</option>
+                      <option value="C">C - Cukup</option>
+                      <option value="D">D - Perlu Perbaikan</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Predikat Keseluruhan</label>
+                    <select id="rapor-predikat" required class="input-field">
+                      <option value="">Pilih Predikat</option>
+                      <option value="Sangat Baik">Sangat Baik</option>
+                      <option value="Baik">Baik</option>
+                      <option value="Cukup">Cukup</option>
+                      <option value="Perlu Bimbingan">Perlu Bimbingan</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label style="color: #1e293b; font-weight: 600; display: block; margin-bottom: 8px;">Catatan Pembimbing</label>
+                  <textarea id="rapor-catatan" rows="4" required placeholder="Masukkan catatan dan evaluasi..." style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px; resize: vertical;"></textarea>
+                </div>
+
+                <button type="submit" id="rapor-submit" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 16px;">
+                  Simpan Rapor
+                </button>
+              </form>
+            </div>
+
+            <div style="background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+              <h3 style="color: #1e293b; font-size: 24px; font-weight: 700; margin-bottom: 16px;">Daftar Rapor Semester</h3>
+              
+              ${raporRecords.length === 0 ? `
+                <div style="text-align: center; padding: 48px 24px; color: #1e293b; opacity: 0.5;">
+                  <p style="font-size: 48px; margin-bottom: 16px; color: #3b82f6;"><i class="fas fa-file-alt"></i></p>
+                  <p style="font-size: 18px;">Belum ada rapor tersimpan</p>
+                </div>
+              ` : `
+                <div style="display: grid; gap: 16px;">
+                  ${raporRecords.map(rapor => {
+                    const santri = mySantri.find(s => s.nis === rapor.santri_id);
+                    return `
+                      <div style="padding: 20px; background: #f8fafc; border-radius: 12px; border-left: 4px solid #3b82f6;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+                          <div>
+                            <h4 style="color: #1e293b; font-size: 20px; font-weight: 700; margin-bottom: 4px;">
+                              ${santri ? santri.santri_nama : rapor.santri_id}
+                            </h4>
+                            <p style="color: #1e293b; opacity: 0.6;">
+                              Semester ${rapor.semester} - ${rapor.tahun_ajaran} | NIS: ${rapor.santri_id}
+                            </p>
+                          </div>
+                          <div style="display: flex; gap: 8px;">
+                            <button onclick="downloadRaporSemesterPDF('${rapor.id}')" style="padding: 8px 16px; border-radius: 6px; border: none; background: #3b82f6; color: white; cursor: pointer; font-weight: 600;">
+                              <i class="fas fa-download"></i> Download PDF
+                            </button>
+                            <button onclick="deleteRapor('${rapor.id}')" style="padding: 8px 16px; border-radius: 6px; border: 2px solid #ef4444; background: white; color: #ef4444; cursor: pointer; font-weight: 600;">
+                              Hapus
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px;">
+                          <div style="padding: 12px; background: white; border-radius: 8px;">
+                            <p style="color: #1e293b; opacity: 0.6; font-size: 12px; margin-bottom: 4px;">Total Hafalan</p>
+                            <p style="color: #1e293b; font-weight: 700; font-size: 18px;">${rapor.total_hafalan_semester} halaman</p>
+                          </div>
+                          <div style="padding: 12px; background: white; border-radius: 8px;">
+                            <p style="color: #1e293b; opacity: 0.6; font-size: 12px; margin-bottom: 4px;">Kehadiran</p>
+                            <p style="color: #1e293b; font-weight: 700; font-size: 18px;">${rapor.rata_rata_kehadiran}%</p>
+                          </div>
+                          <div style="padding: 12px; background: white; border-radius: 8px;">
+                            <p style="color: #1e293b; opacity: 0.6; font-size: 12px; margin-bottom: 4px;">Mutabaah</p>
+                            <p style="color: #1e293b; font-weight: 700; font-size: 18px;">${rapor.rata_rata_mutabaah}%</p>
+                          </div>
+                          <div style="padding: 12px; background: white; border-radius: 8px;">
+                            <p style="color: #1e293b; opacity: 0.6; font-size: 12px; margin-bottom: 4px;">Nilai Tahfidz</p>
+                            <p style="color: #1e293b; font-weight: 700; font-size: 18px;">${rapor.nilai_tahfidz}</p>
+                          </div>
+                          <div style="padding: 12px; background: white; border-radius: 8px;">
+                            <p style="color: #1e293b; opacity: 0.6; font-size: 12px; margin-bottom: 4px;">Nilai Tahsin</p>
+                            <p style="color: #1e293b; font-weight: 700; font-size: 18px;">${rapor.nilai_tahsin}</p>
+                          </div>
+                          <div style="padding: 12px; background: white; border-radius: 8px;">
+                            <p style="color: #1e293b; opacity: 0.6; font-size: 12px; margin-bottom: 4px;">Predikat</p>
+                            <p style="color: #1e293b; font-weight: 700; font-size: 18px;">${rapor.predikat}</p>
+                          </div>
+                        </div>
+                        
+                        <div style="padding: 12px; background: white; border-radius: 8px;">
+                          <p style="color: #1e293b; font-weight: 600; margin-bottom: 8px;">Catatan Pembimbing:</p>
+                          <p style="color: #1e293b; opacity: 0.8; line-height: 1.6;">${rapor.catatan_pembimbing}</p>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              `}
+            </div>
+          </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderLaporan() {
+      const today = new Date();
+      const currentWeek = getWeekNumber(today);
+      const currentMonth = today.getMonth();
+      const currentYear = today.getFullYear();
+
+      const myData = allRecords.filter(r => r.input_by === currentUser.email);
+      const mySantri = allRecords.filter(r => r.type === 'santri' && r.pembimbing_email === currentUser.email);
+      
+      const savedWeeklyReports = allRecords.filter(r => r.type === 'laporan_mingguan' && r.pembimbing_email === currentUser.email);
+      const savedMonthlyReports = allRecords.filter(r => r.type === 'laporan_bulanan' && r.pembimbing_email === currentUser.email);
+
+      return `
+        <div class="w-full h-full flex">
+          ${renderSidebar('laporan')}
+          <div class="fade-in" style="flex: 1; overflow-y: auto; background: #f8fafc;">
+            <div class="p-4 md:p-8">
+              <div class="max-w-6xl mx-auto">
+            
+            <!-- Rapor Mingguan -->
+            <div style="background: white; border-radius: 12px; padding: 32px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 3px solid #3b82f6; margin-bottom: 24px;">
+              <div style="text-align: center; border-bottom: 3px solid #3b82f6; padding-bottom: 20px; margin-bottom: 28px;">
+                <h2 style="color: #1e293b; font-size: 22px; font-weight: 700; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Buat Rapor Mingguan</h2>
+                <p style="color: #3b82f6; font-weight: 600; font-size: 15px;">Generate laporan aktivitas mingguan per santri</p>
+              </div>
+
+              <form id="weekly-form" onsubmit="generateWeeklyReport(event)" style="display: flex; flex-direction: column; gap: 20px;">
+                <div style="border: 2px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #f8fafc;">
+                  <label style="display: block; color: #64748b; font-size: 13px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase;">Nama Santri</label>
+                  <select id="weekly-santri" required style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-weight: 600; font-size: 16px; background: white; color: #1e293b;">
+                    <option value="">Pilih Santri</option>
+                    ${mySantri.map(s => `<option value="${s.nis}">${s.santri_nama} (${s.nis}) - ${s.kelas}</option>`).join('')}
+                  </select>
+                </div>
+
+                <div style="border: 2px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #f8fafc;">
+                  <label style="display: block; color: #64748b; font-size: 13px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase;">Rentang Tanggal</label>
+                  <input type="text" id="weekly-rentang" required placeholder="Contoh: 7-13 Januari 2025" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-weight: 600; font-size: 16px; background: white; color: #1e293b;">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                  <div style="border: 2px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #f8fafc;">
+                    <label style="display: block; color: #64748b; font-size: 13px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase;">Total Hafalan - Juz</label>
+                    <input type="number" id="weekly-juz" min="0" max="30" required placeholder="Contoh: 20" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-weight: 700; font-size: 16px; background: white; color: #1e293b;">
+                  </div>
+                  <div style="border: 2px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #f8fafc;">
+                    <label style="display: block; color: #64748b; font-size: 13px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase;">Total Hafalan - Halaman</label>
+                    <input type="number" id="weekly-halaman" min="0" max="19" required placeholder="Contoh: 4" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-weight: 700; font-size: 16px; background: white; color: #1e293b;">
+                  </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                  <div style="border: 2px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #f8fafc;">
+                    <label style="display: block; color: #64748b; font-size: 13px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase;">Nilai Tahfidz</label>
+                    <select id="weekly-nilai-tahfidz" required style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-weight: 700; font-size: 16px; background: white; color: #1e293b;">
+                      <option value="">Pilih Nilai</option>
+                      <option value="A">A - Sangat Lancar</option>
+                      <option value="B">B - Lancar</option>
+                      <option value="C">C - Cukup</option>
+                      <option value="D">D - Kurang</option>
+                    </select>
+                  </div>
+                  <div style="border: 2px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #f8fafc;">
+                    <label style="display: block; color: #64748b; font-size: 13px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase;">Nilai Tahsin</label>
+                    <select id="weekly-nilai-tahsin" required style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-weight: 700; font-size: 16px; background: white; color: #1e293b;">
+                      <option value="">Pilih Nilai</option>
+                      <option value="A">A - Sangat Baik</option>
+                      <option value="B">B - Baik</option>
+                      <option value="C">C - Cukup</option>
+                      <option value="D">D - Perlu Perbaikan</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style="border: 2px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #f8fafc;">
+                  <label style="display: block; color: #64748b; font-size: 13px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase;">Catatan Pembimbing</label>
+                  <textarea id="weekly-catatan" rows="3" required placeholder="Masukkan catatan evaluasi mingguan..." style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background: white; color: #1e293b; resize: vertical;"></textarea>
+                </div>
+
+                <div style="text-align: center; padding-top: 20px; border-top: 2px solid #e2e8f0;">
+                  <button type="submit" id="weekly-submit" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 14px 32px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 15px;">
+                    <i class="fas fa-file-alt"></i> Simpan Rapor Mingguan
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Daftar Rapor Mingguan -->
+            <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 24px;">
+              <h3 style="color: #1e293b; font-size: 20px; font-weight: 700; margin-bottom: 16px;">
+                <i class="fas fa-list-alt" style="color: #3b82f6;"></i> Daftar Rapor Mingguan Tersimpan
+              </h3>
+              
+              ${savedWeeklyReports.length === 0 ? `
+                <div style="text-align: center; padding: 32px; color: #64748b;">
+                  <i class="fas fa-folder-open" style="font-size: 48px; margin-bottom: 12px; color: #cbd5e1;"></i>
+                  <p>Belum ada rapor mingguan tersimpan</p>
+                </div>
+              ` : `
+                <div style="display: grid; gap: 12px;">
+                  ${savedWeeklyReports.map(report => {
+                    const santri = mySantri.find(s => s.nis === report.santri_id);
+                    return `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                      <div>
+                        <p style="color: #1e293b; font-weight: 700; font-size: 16px; margin-bottom: 4px;">${santri ? santri.santri_nama : report.santri_id}</p>
+                        <p style="color: #64748b; font-size: 13px; margin-bottom: 6px;">${report.rentang_tanggal}</p>
+                        <p style="color: #64748b; font-size: 12px;">
+                          ${report.juz_total} Juz ${report.sisa_halaman} Halaman • Tahfidz: ${report.nilai_tahfidz} • Tahsin: ${report.nilai_tahsin}
+                        </p>
+                      </div>
+                      <div style="display: flex; gap: 8px;">
+                        <button onclick="downloadWeeklyReportPDF('${report.id}')" style="padding: 8px 16px; border-radius: 6px; border: none; background: #3b82f6; color: white; cursor: pointer; font-weight: 600;">
+                          <i class="fas fa-download"></i> Download PDF
+                        </button>
+                        <button onclick="deleteWeeklyReport('${report.id}')" style="padding: 8px 16px; border-radius: 6px; border: 2px solid #ef4444; background: white; color: #ef4444; cursor: pointer; font-weight: 600;">
+                          Hapus
+                        </button>
+                      </div>
+                    </div>
+                  `}).join('')}
+                </div>
+              `}
+            </div>
+
+            <!-- Rapor Bulanan -->
+            <div style="background: white; border-radius: 12px; padding: 32px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 3px solid #10b981; margin-bottom: 24px;">
+              <div style="text-align: center; border-bottom: 3px solid #10b981; padding-bottom: 20px; margin-bottom: 28px;">
+                <h2 style="color: #1e293b; font-size: 22px; font-weight: 700; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Buat Rapor Bulanan</h2>
+                <p style="color: #10b981; font-weight: 600; font-size: 15px;">Generate laporan aktivitas bulanan per santri</p>
+              </div>
+
+              <form id="monthly-form" onsubmit="generateMonthlyReport(event)" style="display: flex; flex-direction: column; gap: 20px;">
+                <div style="border: 2px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #f8fafc;">
+                  <label style="display: block; color: #64748b; font-size: 13px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase;">Nama Santri</label>
+                  <select id="monthly-santri" required style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-weight: 600; font-size: 16px; background: white; color: #1e293b;">
+                    <option value="">Pilih Santri</option>
+                    ${mySantri.map(s => `<option value="${s.nis}">${s.santri_nama} (${s.nis}) - ${s.kelas}</option>`).join('')}
+                  </select>
+                </div>
+
+                <div style="border: 2px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #f8fafc;">
+                  <label style="display: block; color: #64748b; font-size: 13px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase;">Rentang Tanggal</label>
+                  <input type="text" id="monthly-rentang" required placeholder="Contoh: 1-31 Januari 2025" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-weight: 600; font-size: 16px; background: white; color: #1e293b;">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                  <div style="border: 2px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #f8fafc;">
+                    <label style="display: block; color: #64748b; font-size: 13px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase;">Total Hafalan - Juz</label>
+                    <input type="number" id="monthly-juz" min="0" max="30" required placeholder="Contoh: 20" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-weight: 700; font-size: 16px; background: white; color: #1e293b;">
+                  </div>
+                  <div style="border: 2px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #f8fafc;">
+                    <label style="display: block; color: #64748b; font-size: 13px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase;">Total Hafalan - Halaman</label>
+                    <input type="number" id="monthly-halaman" min="0" max="19" required placeholder="Contoh: 4" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-weight: 700; font-size: 16px; background: white; color: #1e293b;">
+                  </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                  <div style="border: 2px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #f8fafc;">
+                    <label style="display: block; color: #64748b; font-size: 13px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase;">Nilai Tahfidz</label>
+                    <select id="monthly-nilai-tahfidz" required style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-weight: 700; font-size: 16px; background: white; color: #1e293b;">
+                      <option value="">Pilih Nilai</option>
+                      <option value="A">A - Sangat Lancar</option>
+                      <option value="B">B - Lancar</option>
+                      <option value="C">C - Cukup</option>
+                      <option value="D">D - Kurang</option>
+                    </select>
+                  </div>
+                  <div style="border: 2px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #f8fafc;">
+                    <label style="display: block; color: #64748b; font-size: 13px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase;">Nilai Tahsin</label>
+                    <select id="monthly-nilai-tahsin" required style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-weight: 700; font-size: 16px; background: white; color: #1e293b;">
+                      <option value="">Pilih Nilai</option>
+                      <option value="A">A - Sangat Baik</option>
+                      <option value="B">B - Baik</option>
+                      <option value="C">C - Cukup</option>
+                      <option value="D">D - Perlu Perbaikan</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style="border: 2px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #f8fafc;">
+                  <label style="display: block; color: #64748b; font-size: 13px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase;">Catatan Pembimbing</label>
+                  <textarea id="monthly-catatan" rows="3" required placeholder="Masukkan catatan evaluasi bulanan..." style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; background: white; color: #1e293b; resize: vertical;"></textarea>
+                </div>
+
+                <div style="text-align: center; padding-top: 20px; border-top: 2px solid #e2e8f0;">
+                  <button type="submit" id="monthly-submit" style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 14px 32px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 15px;">
+                    <i class="fas fa-file-alt"></i> Simpan Rapor Bulanan
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Daftar Rapor Bulanan -->
+            <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+              <h3 style="color: #1e293b; font-size: 20px; font-weight: 700; margin-bottom: 16px;">
+                <i class="fas fa-list-alt" style="color: #10b981;"></i> Daftar Rapor Bulanan Tersimpan
+              </h3>
+              
+              ${savedMonthlyReports.length === 0 ? `
+                <div style="text-align: center; padding: 32px; color: #64748b;">
+                  <i class="fas fa-folder-open" style="font-size: 48px; margin-bottom: 12px; color: #cbd5e1;"></i>
+                  <p>Belum ada rapor bulanan tersimpan</p>
+                </div>
+              ` : `
+                <div style="display: grid; gap: 12px;">
+                  ${savedMonthlyReports.map(report => {
+                    const santri = mySantri.find(s => s.nis === report.santri_id);
+                    return `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #10b981;">
+                      <div>
+                        <p style="color: #1e293b; font-weight: 700; font-size: 16px; margin-bottom: 4px;">${santri ? santri.santri_nama : report.santri_id}</p>
+                        <p style="color: #64748b; font-size: 13px; margin-bottom: 6px;">${report.rentang_tanggal}</p>
+                        <p style="color: #64748b; font-size: 12px;">
+                          ${report.juz_total} Juz ${report.sisa_halaman} Halaman • Tahfidz: ${report.nilai_tahfidz} • Tahsin: ${report.nilai_tahsin}
+                        </p>
+                      </div>
+                      <div style="display: flex; gap: 8px;">
+                        <button onclick="downloadMonthlyReportPDF('${report.id}')" style="padding: 8px 16px; border-radius: 6px; border: none; background: #10b981; color: white; cursor: pointer; font-weight: 600;">
+                          <i class="fas fa-download"></i> Download PDF
+                        </button>
+                        <button onclick="deleteMonthlyReport('${report.id}')" style="padding: 8px 16px; border-radius: 6px; border: 2px solid #ef4444; background: white; color: #ef4444; cursor: pointer; font-weight: 600;">
+                          Hapus
+                        </button>
+                      </div>
+                    </div>
+                  `}).join('')}
+                </div>
+              `}
+            </div>
+
+          </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function getWeekNumber(date) {
+      const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+      const dayNum = d.getUTCDay() || 7;
+      d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+      const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+      return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    }
+
+    function getMonthName(month) {
+      const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+      return months[month];
+    }
+
+    function downloadWeeklyReportPDF(id) {
+      const { jsPDF } = window.jspdf;
+      const report = allRecords.find(r => r.id === id);
+      if (!report) return;
+      
+      const mySantri = allRecords.filter(r => r.type === 'santri' && r.pembimbing_email === currentUser.email);
+      const santri = mySantri.find(s => s.nis === report.santri_id);
+      
+      const doc = new jsPDF();
+      
+      // Header
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text('RAPOR MINGGUAN KETAHFIZAN', 105, 20, { align: 'center' });
+      
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.text("Ma'had Abu Bakar Ash-Shiddiq", 105, 28, { align: 'center' });
+      doc.text('Anabanua, Kab. Wajo, Sulawesi Selatan', 105, 35, { align: 'center' });
+      
+      // Line
+      doc.setLineWidth(0.5);
+      doc.line(15, 40, 195, 40);
+      
+      // Data Santri
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text('DATA SANTRI', 15, 50);
+      
+      doc.setFont('helvetica', 'normal');
+      let y = 58;
+      doc.text(`Nama`, 15, y);
+      doc.text(`: ${santri ? santri.santri_nama : report.santri_id}`, 50, y);
+      y += 7;
+      doc.text(`NIS`, 15, y);
+      doc.text(`: ${report.santri_id}`, 50, y);
+      y += 7;
+      doc.text(`Kelas`, 15, y);
+      doc.text(`: ${santri ? santri.kelas : '-'}`, 50, y);
+      y += 7;
+      doc.text(`Rentang Tanggal`, 15, y);
+      doc.text(`: ${report.rentang_tanggal}`, 50, y);
+      
+      // Capaian
+      y += 15;
+      doc.setFont('helvetica', 'bold');
+      doc.text('CAPAIAN HAFALAN', 15, y);
+      
+      doc.setFont('helvetica', 'normal');
+      y += 8;
+      doc.text(`Total Hafalan`, 15, y);
+      doc.text(`: ${report.juz_total} Juz ${report.sisa_halaman} Halaman`, 70, y);
+      y += 7;
+      doc.text(`Nilai Tahfidz`, 15, y);
+      doc.text(`: ${report.nilai_tahfidz}`, 70, y);
+      y += 7;
+      doc.text(`Nilai Tahsin`, 15, y);
+      doc.text(`: ${report.nilai_tahsin}`, 70, y);
+      
+      // Catatan Pembimbing
+      if (report.catatan_pembimbing) {
+        y += 15;
+        doc.setFont('helvetica', 'bold');
+        doc.text('CATATAN PEMBIMBING', 15, y);
+        
+        doc.setFont('helvetica', 'normal');
+        y += 8;
+        const lines = doc.splitTextToSize(report.catatan_pembimbing, 180);
+        doc.text(lines, 15, y);
+        y += lines.length * 7;
+      }
+      
+      // Footer
+      y += 20;
+      if (y > 250) {
+        doc.addPage();
+        y = 20;
+      }
+      
+      doc.text(`Anabanua, ${new Date().toLocaleDateString('id-ID')}`, 130, y);
+      y += 7;
+      doc.text('Pembimbing Halaqah,', 130, y);
+      y += 20;
+      doc.text(currentUser.nama, 130, y);
+      
+      doc.save(`Rapor_Mingguan_${santri ? santri.santri_nama : report.santri_id}_${report.rentang_tanggal.replace(/\s/g, '_')}.pdf`);
+      showToast('Rapor mingguan berhasil didownload');
+    }
+
+    function downloadMonthlyReportPDF(id) {
+      const { jsPDF } = window.jspdf;
+      const report = allRecords.find(r => r.id === id);
+      if (!report) return;
+      
+      const mySantri = allRecords.filter(r => r.type === 'santri' && r.pembimbing_email === currentUser.email);
+      const santri = mySantri.find(s => s.nis === report.santri_id);
+      
+      const doc = new jsPDF();
+      
+      // Header
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text('RAPOR BULANAN KETAHFIZAN', 105, 20, { align: 'center' });
+      
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.text("Ma'had Abu Bakar Ash-Shiddiq", 105, 28, { align: 'center' });
+      doc.text('Anabanua, Kab. Wajo, Sulawesi Selatan', 105, 35, { align: 'center' });
+      
+      // Line
+      doc.setLineWidth(0.5);
+      doc.line(15, 40, 195, 40);
+      
+      // Data Santri
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text('DATA SANTRI', 15, 50);
+      
+      doc.setFont('helvetica', 'normal');
+      let y = 58;
+      doc.text(`Nama`, 15, y);
+      doc.text(`: ${santri ? santri.santri_nama : report.santri_id}`, 50, y);
+      y += 7;
+      doc.text(`NIS`, 15, y);
+      doc.text(`: ${report.santri_id}`, 50, y);
+      y += 7;
+      doc.text(`Kelas`, 15, y);
+      doc.text(`: ${santri ? santri.kelas : '-'}`, 50, y);
+      y += 7;
+      doc.text(`Rentang Tanggal`, 15, y);
+      doc.text(`: ${report.rentang_tanggal}`, 50, y);
+      
+      // Capaian
+      y += 15;
+      doc.setFont('helvetica', 'bold');
+      doc.text('CAPAIAN HAFALAN', 15, y);
+      
+      doc.setFont('helvetica', 'normal');
+      y += 8;
+      doc.text(`Total Hafalan`, 15, y);
+      doc.text(`: ${report.juz_total} Juz ${report.sisa_halaman} Halaman`, 70, y);
+      y += 7;
+      doc.text(`Nilai Tahfidz`, 15, y);
+      doc.text(`: ${report.nilai_tahfidz}`, 70, y);
+      y += 7;
+      doc.text(`Nilai Tahsin`, 15, y);
+      doc.text(`: ${report.nilai_tahsin}`, 70, y);
+      
+      // Catatan Pembimbing
+      if (report.catatan_pembimbing) {
+        y += 15;
+        doc.setFont('helvetica', 'bold');
+        doc.text('CATATAN PEMBIMBING', 15, y);
+        
+        doc.setFont('helvetica', 'normal');
+        y += 8;
+        const lines = doc.splitTextToSize(report.catatan_pembimbing, 180);
+        doc.text(lines, 15, y);
+        y += lines.length * 7;
+      }
+      
+      // Footer
+      y += 20;
+      if (y > 250) {
+        doc.addPage();
+        y = 20;
+      }
+      
+      doc.text(`Anabanua, ${new Date().toLocaleDateString('id-ID')}`, 130, y);
+      y += 7;
+      doc.text('Pembimbing Halaqah,', 130, y);
+      y += 20;
+      doc.text(currentUser.nama, 130, y);
+      
+      doc.save(`Rapor_Bulanan_${santri ? santri.santri_nama : report.santri_id}_${report.rentang_tanggal.replace(/\s/g, '_')}.pdf`);
+      showToast('Rapor bulanan berhasil didownload');
+    }
+
+    function downloadRaporSemesterPDF(id) {
+      const { jsPDF } = window.jspdf;
+      const rapor = allRecords.find(r => r.id === id);
+      if (!rapor) return;
+
+      const mySantri = allRecords.filter(r => r.type === 'santri' && r.pembimbing_email === currentUser.email);
+      const santri = mySantri.find(s => s.nis === rapor.santri_id);
+
+      const doc = new jsPDF();
+      
+      // Header
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text('RAPOR SEMESTER KETAHFIZAN', 105, 20, { align: 'center' });
+      
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.text("Ma'had Abu Bakar Ash-Shiddiq", 105, 28, { align: 'center' });
+      doc.text('Anabanua, Kab. Wajo, Sulawesi Selatan', 105, 35, { align: 'center' });
+      
+      // Line
+      doc.setLineWidth(0.5);
+      doc.line(15, 40, 195, 40);
+      
+      // Data Santri
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text('IDENTITAS SANTRI', 15, 50);
+      
+      doc.setFont('helvetica', 'normal');
+      let y = 58;
+      doc.text(`Nama`, 15, y);
+      doc.text(`: ${santri ? santri.santri_nama : rapor.santri_id}`, 50, y);
+      y += 7;
+      doc.text(`NIS`, 15, y);
+      doc.text(`: ${rapor.santri_id}`, 50, y);
+      y += 7;
+      doc.text(`Kelas`, 15, y);
+      doc.text(`: ${santri ? santri.kelas : '-'}`, 50, y);
+      y += 7;
+      doc.text(`Semester`, 15, y);
+      doc.text(`: ${rapor.semester}`, 50, y);
+      y += 7;
+      doc.text(`Tahun Ajaran`, 15, y);
+      doc.text(`: ${rapor.tahun_ajaran}`, 50, y);
+      
+      // Capaian Pembelajaran
+      y += 15;
+      doc.setFont('helvetica', 'bold');
+      doc.text('CAPAIAN PEMBELAJARAN', 15, y);
+      
+      doc.setFont('helvetica', 'normal');
+      y += 8;
+      doc.text(`Total Hafalan Semester`, 15, y);
+      doc.text(`: ${rapor.total_hafalan_semester || 0} halaman`, 70, y);
+      y += 7;
+      doc.text(`Rata-rata Kehadiran`, 15, y);
+      doc.text(`: ${rapor.rata_rata_kehadiran || 0}%`, 70, y);
+      y += 7;
+      doc.text(`Rata-rata Mutabaah Yaumiyah`, 15, y);
+      doc.text(`: ${rapor.rata_rata_mutabaah || 0}%`, 70, y);
+      y += 7;
+      doc.text(`Nilai Tahfidz`, 15, y);
+      doc.text(`: ${rapor.nilai_tahfidz}`, 70, y);
+      y += 7;
+      doc.text(`Nilai Tahsin`, 15, y);
+      doc.text(`: ${rapor.nilai_tahsin}`, 70, y);
+      y += 7;
+      doc.text(`Predikat Keseluruhan`, 15, y);
+      doc.text(`: ${rapor.predikat}`, 70, y);
+      
+      // Catatan Pembimbing
+      y += 15;
+      doc.setFont('helvetica', 'bold');
+      doc.text('CATATAN PEMBIMBING', 15, y);
+      
+      doc.setFont('helvetica', 'normal');
+      y += 8;
+      const lines = doc.splitTextToSize(rapor.catatan_pembimbing, 180);
+      doc.text(lines, 15, y);
+      y += lines.length * 7;
+      
+      // Keterangan Nilai
+      y += 15;
+      doc.setFont('helvetica', 'bold');
+      doc.text('KETERANGAN NILAI', 15, y);
+      
+      doc.setFont('helvetica', 'normal');
+      y += 8;
+      doc.text('A = Sangat Baik', 15, y);
+      y += 6;
+      doc.text('B = Baik', 15, y);
+      y += 6;
+      doc.text('C = Cukup', 15, y);
+      y += 6;
+      doc.text('D = Perlu Perbaikan', 15, y);
+      
+      // Footer
+      y += 20;
+      if (y > 250) {
+        doc.addPage();
+        y = 20;
+      }
+      
+      doc.text(`Anabanua, ${new Date().toLocaleDateString('id-ID')}`, 130, y);
+      y += 7;
+      doc.text('Mengetahui,', 130, y);
+      y += 7;
+      doc.text('Pembimbing Halaqah', 130, y);
+      y += 20;
+      doc.text(currentUser.nama, 130, y);
+      
+      doc.save(`Rapor_Semester_${santri ? santri.santri_nama : rapor.santri_id}_${rapor.semester}_${rapor.tahun_ajaran.replace('/', '-')}.pdf`);
+      showToast('Rapor semester berhasil didownload');
+    }
+
+    function navigateTo(view) {
+      currentView = view;
+      renderCurrentView();
+    }
+
+    function selectSesi(sesi) {
+      selectedSesi = sesi;
+      renderCurrentView();
+    }
+
+    function updateDate(date) {
+      selectedDate = date;
+      renderCurrentView();
+    }
+
+    async function handleLogin(event) {
+      event.preventDefault();
+      
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      
+      const submitBtn = document.getElementById('login-submit');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<div class="loading-spinner" style="margin: 0 auto;"></div>';
+
+      const user = allRecords.find(r => 
+        r.type === 'user' && 
+        r.email === email && 
+        r.password === password
+      );
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Masuk';
+
+      if (user) {
+        currentUser = user;
+        currentView = 'dashboard';
+        await loadAllData();
+      } else {
+        showToast('Email atau password salah');
+      }
+    }
+
+    async function handleRegister(event) {
+      event.preventDefault();
+      
+      const email = document.getElementById('register-email').value;
+      
+      const existingUser = allRecords.find(r => r.type === 'user' && r.email === email);
+      if (existingUser) {
+        showToast('Email sudah terdaftar');
+        return;
+      }
+
+      const submitBtn = document.getElementById('register-submit');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<div class="loading-spinner" style="margin: 0 auto;"></div>';
+
+      const result = await createRecord({
+        id: 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        type: 'user',
+        nama: document.getElementById('register-nama').value,
+        email: email,
+        password: document.getElementById('register-password').value,
+        halaqah_id: document.getElementById('register-halaqah').value,
+        tanggal: new Date().toISOString().split('T')[0],
+        waktu: new Date().toISOString()
+      });
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Daftar Akun';
+
+      if (result.isOk) {
+        showToast('Akun berhasil dibuat! Silakan login');
+        navigateTo('login');
+      } else {
+        showToast('Gagal membuat akun');
+      }
+    }
+
+    function handleLogout() {
+      currentUser = null;
+      currentView = 'login';
+      selectedSesi = null;
+      userSessions = [];
+      renderCurrentView();
+    }
+
+    async function submitConfig(event) {
+      event.preventDefault();
+      
+      if (userSessions.length >= 6) {
+        showToast('Maksimal 6 sesi telah tercapai');
+        return;
+      }
+
+      const submitBtn = document.getElementById('config-submit');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<div class="loading-spinner" style="margin: 0 auto;"></div>';
+
+      const result = await createRecord({
+        id: 'config_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        type: 'halaqah_config',
+        pembimbing_email: currentUser.email,
+        nama_sesi: document.getElementById('config-sesi').value,
+        jam_mulai: document.getElementById('config-mulai').value,
+        jam_selesai: document.getElementById('config-selesai').value,
+        tanggal: new Date().toISOString().split('T')[0],
+        waktu: new Date().toISOString()
+      });
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Tambah Sesi';
+
+      if (result.isOk) {
+        showToast('Sesi berhasil ditambahkan');
+        document.getElementById('config-form').reset();
+      } else {
+        showToast('Gagal menambahkan sesi');
+      }
+    }
+
+    async function deleteConfig(id) {
+      const sesi = allRecords.find(r => r.id === id);
+      if (!sesi) return;
+
+      const confirmDiv = document.createElement('div');
+      confirmDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 32px; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); z-index: 1000; max-width: 400px; width: 90%;';
+      confirmDiv.innerHTML = `
+        <h3 style="margin-bottom: 16px; font-size: 20px; font-weight: 700;">Konfirmasi Hapus</h3>
+        <p style="margin-bottom: 24px; color: #64748b;">Yakin ingin menghapus sesi <strong>${sesi.nama_sesi}</strong>?</p>
+        <div style="display: flex; gap: 12px;">
+          <button id="confirm-delete" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #ef4444; color: white; cursor: pointer; font-weight: 600;">Hapus</button>
+          <button id="cancel-delete" style="flex: 1; padding: 12px; border-radius: 8px; border: 2px solid #e2e8f0; background: white; cursor: pointer; font-weight: 600;">Batal</button>
+        </div>
+      `;
+
+      const backdrop = document.createElement('div');
+      backdrop.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999;';
+
+      document.body.appendChild(backdrop);
+      document.body.appendChild(confirmDiv);
+
+      document.getElementById('cancel-delete').onclick = () => {
+        document.body.removeChild(confirmDiv);
+        document.body.removeChild(backdrop);
+      };
+
+      document.getElementById('confirm-delete').onclick = async () => {
+        const result = await deleteRecord(sesi);
+        document.body.removeChild(confirmDiv);
+        document.body.removeChild(backdrop);
+        
+        if (result.isOk) {
+          showToast('Sesi berhasil dihapus');
+        } else {
+          showToast('Gagal menghapus sesi');
+        }
+      };
+    }
+
+    async function markAbsensi(santriId, status) {
+      const existingAbsensi = allRecords.find(r => 
+        r.type === 'absensi' && 
+        r.santri_id === santriId &&
+        r.tanggal === selectedDate &&
+        r.sesi === selectedSesi &&
+        r.input_by === currentUser.email
+      );
+
+      if (existingAbsensi) {
+        existingAbsensi.status = status;
+        existingAbsensi.waktu = new Date().toISOString();
+        const result = await updateRecord(existingAbsensi);
+        if (!result.isOk) {
+          showToast('Gagal memperbarui absensi');
+        }
+      } else {
+        const result = await createRecord({
+          id: 'absensi_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+          type: 'absensi',
+          tanggal: selectedDate,
+          sesi: selectedSesi,
+          santri_id: santriId,
+          status: status,
+          input_by: currentUser.email,
+          waktu: new Date().toISOString()
+        });
+        if (!result.isOk) {
+          showToast('Gagal menyimpan absensi');
+        }
+      }
+    }
+
+    async function submitTahfidz(event) {
+      event.preventDefault();
+      
+      const submitBtn = document.getElementById('tahfidz-submit');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<div class="loading-spinner" style="margin: 0 auto;"></div>';
+
+      const result = await createRecord({
+        id: 'tahfidz_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        type: 'tahfidz',
+        jenis: 'tahfidz',
+        santri_id: document.getElementById('tahfidz-santri').value,
+        tanggal: new Date().toISOString().split('T')[0],
+        waktu: new Date().toISOString(),
+        juz: document.getElementById('tahfidz-juz').value,
+        halaman: document.getElementById('tahfidz-halaman').value,
+        surah: document.getElementById('tahfidz-surah').value,
+        ayat: document.getElementById('tahfidz-ayat').value,
+        nilai: document.getElementById('tahfidz-nilai').value,
+        catatan: document.getElementById('tahfidz-catatan').value,
+        input_by: currentUser.email
+      });
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Simpan Penilaian';
+
+      if (result.isOk) {
+        showToast('Penilaian tahfidz berhasil disimpan');
+        document.getElementById('tahfidz-form').reset();
+      } else {
+        showToast('Gagal menyimpan penilaian');
+      }
+    }
+
+    async function submitTahsin(event) {
+      event.preventDefault();
+      
+      const submitBtn = document.getElementById('tahsin-submit');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<div class="loading-spinner" style="margin: 0 auto;"></div>';
+
+      const result = await createRecord({
+        id: 'tahsin_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        type: 'tahsin',
+        jenis: 'tahsin',
+        santri_id: document.getElementById('tahsin-santri').value,
+        tanggal: new Date().toISOString().split('T')[0],
+        waktu: new Date().toISOString(),
+        kategori: document.getElementById('tahsin-kategori').value,
+        nilai: document.getElementById('tahsin-nilai').value,
+        catatan: document.getElementById('tahsin-catatan').value,
+        input_by: currentUser.email
+      });
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Simpan Penilaian';
+
+      if (result.isOk) {
+        showToast('Penilaian tahsin berhasil disimpan');
+        document.getElementById('tahsin-form').reset();
+      } else {
+        showToast('Gagal menyimpan penilaian');
+      }
+    }
+
+    async function submitYaumiyah(event) {
+      event.preventDefault();
+      
+      const submitBtn = document.getElementById('yaumiyah-submit');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<div class="loading-spinner" style="margin: 0 auto;"></div>';
+
+      const result = await createRecord({
+        id: 'yaumiyah_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        type: 'yaumiyah',
+        santri_id: document.getElementById('yaumiyah-santri').value,
+        tanggal: document.getElementById('yaumiyah-tanggal').value,
+        waktu: new Date().toISOString(),
+        shalat_subuh: document.getElementById('shalat-subuh').checked,
+        shalat_dzuhur: document.getElementById('shalat-dzuhur').checked,
+        shalat_ashar: document.getElementById('shalat-ashar').checked,
+        shalat_maghrib: document.getElementById('shalat-maghrib').checked,
+        shalat_isya: document.getElementById('shalat-isya').checked,
+        rawatib: document.getElementById('rawatib').checked,
+        dhuha: document.getElementById('dhuha').checked,
+        lail: document.getElementById('lail').checked,
+        puasa_sunnah: document.getElementById('puasa-sunnah').checked,
+        dzikir: document.getElementById('dzikir').checked,
+        hafalan_hadits: document.getElementById('hafalan-hadits').checked,
+        input_by: currentUser.email
+      });
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Simpan Aktivitas';
+
+      if (result.isOk) {
+        showToast('Aktivitas yaumiyah berhasil disimpan');
+        document.getElementById('yaumiyah-form').reset();
+      } else {
+        showToast('Gagal menyimpan aktivitas');
+      }
+    }
+
+    async function submitSantri(event) {
+      event.preventDefault();
+      
+      const nis = document.getElementById('santri-nis').value;
+      const existing = allRecords.find(r => r.type === 'santri' && r.nis === nis);
+      if (existing) {
+        showToast('NIS sudah terdaftar');
+        return;
+      }
+
+      const submitBtn = document.getElementById('santri-submit');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<div class="loading-spinner" style="margin: 0 auto;"></div>';
+
+      const result = await createRecord({
+        id: 'santri_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        type: 'santri',
+        nis: nis,
+        santri_nama: document.getElementById('santri-nama').value,
+        kelas: document.getElementById('santri-kelas').value,
+        pembimbing_email: currentUser.email,
+        tanggal: new Date().toISOString().split('T')[0],
+        waktu: new Date().toISOString()
+      });
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Tambah Santri';
+
+      if (result.isOk) {
+        showToast('Santri berhasil ditambahkan');
+        document.getElementById('santri-form').reset();
+      } else {
+        showToast('Gagal menambahkan santri');
+      }
+    }
+
+    async function deleteSantri(id) {
+      const santri = allRecords.find(r => r.id === id);
+      if (!santri) return;
+
+      const confirmDiv = document.createElement('div');
+      confirmDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 32px; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); z-index: 1000; max-width: 400px; width: 90%;';
+      confirmDiv.innerHTML = `
+        <h3 style="margin-bottom: 16px; font-size: 20px; font-weight: 700;">Konfirmasi Hapus</h3>
+        <p style="margin-bottom: 24px; color: #64748b;">Yakin ingin menghapus santri <strong>${santri.santri_nama}</strong>?</p>
+        <div style="display: flex; gap: 12px;">
+          <button id="confirm-delete" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #ef4444; color: white; cursor: pointer; font-weight: 600;">Hapus</button>
+          <button id="cancel-delete" style="flex: 1; padding: 12px; border-radius: 8px; border: 2px solid #e2e8f0; background: white; cursor: pointer; font-weight: 600;">Batal</button>
+        </div>
+      `;
+
+      const backdrop = document.createElement('div');
+      backdrop.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999;';
+
+      document.body.appendChild(backdrop);
+      document.body.appendChild(confirmDiv);
+
+      document.getElementById('cancel-delete').onclick = () => {
+        document.body.removeChild(confirmDiv);
+        document.body.removeChild(backdrop);
+      };
+
+      document.getElementById('confirm-delete').onclick = async () => {
+        const result = await deleteRecord(santri);
+        document.body.removeChild(confirmDiv);
+        document.body.removeChild(backdrop);
+        
+        if (result.isOk) {
+          showToast('Santri berhasil dihapus');
+        } else {
+          showToast('Gagal menghapus santri');
+        }
+      };
+    }
+
+    async function loadSantriData() {
+      const santriId = document.getElementById('rapor-santri').value;
+      const semester = document.getElementById('rapor-semester').value;
+      
+      if (!santriId || !semester) return;
+
+      const currentYear = new Date().getFullYear();
+      let startMonth, endMonth;
+      
+      if (semester === 'Ganjil') {
+        startMonth = 7;
+        endMonth = 12;
+      } else {
+        startMonth = 1;
+        endMonth = 6;
+      }
+
+      // Filter data berdasarkan santri, semester, dan tahun
+      const semesterData = allRecords.filter(r => {
+        if (!r.tanggal || r.santri_id !== santriId) return false;
+        const recordDate = new Date(r.tanggal);
+        const month = recordDate.getMonth() + 1;
+        const year = recordDate.getFullYear();
+        
+        // Untuk semester ganjil: Juli-Desember tahun ini
+        // Untuk semester genap: Januari-Juni tahun ini
+        if (semester === 'Ganjil') {
+          return year === currentYear && month >= startMonth && month <= endMonth;
+        } else {
+          return year === currentYear && month >= startMonth && month <= endMonth;
+        }
+      });
+
+      // Hitung total hafalan dari data tahfidz (dalam halaman)
+      const tahfidzData = semesterData.filter(r => r.type === 'tahfidz');
+      const totalHalaman = calculateTotalPages(tahfidzData);
+
+      // Hitung total Juz (20 halaman = 1 juz)
+      const totalJuz = Math.floor(totalHalaman / 20);
+      const sisaHalaman = totalHalaman % 20;
+
+      // Hitung rata-rata kehadiran dari data absensi
+      const absensiData = semesterData.filter(r => r.type === 'absensi');
+      const hadirCount = absensiData.filter(r => r.status === 'Hadir').length;
+      const kehadiranPersen = absensiData.length > 0 ? Math.round((hadirCount / absensiData.length) * 100) : 0;
+
+      // Hitung rata-rata mutabaah yaumiyah
+      const yaumiyahData = semesterData.filter(r => r.type === 'yaumiyah');
+      let totalChecked = 0;
+      let totalPossible = 0;
+      yaumiyahData.forEach(y => {
+        const fields = ['shalat_subuh', 'shalat_dzuhur', 'shalat_ashar', 'shalat_maghrib', 'shalat_isya', 'rawatib', 'dhuha', 'lail', 'puasa_sunnah', 'dzikir', 'hafalan_hadits'];
+        fields.forEach(field => {
+          totalPossible++;
+          if (y[field]) totalChecked++;
+        });
+      });
+      const mutabaahPersen = totalPossible > 0 ? Math.round((totalChecked / totalPossible) * 100) : 0;
+
+      // Hitung nilai tahsin berdasarkan rata-rata dari 4 kategori
+      const tahsinData = semesterData.filter(r => r.type === 'tahsin');
+      const nilaiMap = { 'A': 4, 'B': 3, 'C': 2, 'D': 1 };
+      
+      // Kelompokkan nilai tahsin per kategori
+      const kategoriNilai = {
+        'Makhorijul Huruf': [],
+        'Tajwid': [],
+        'Kelancaran': [],
+        'Adab': []
+      };
+      
+      tahsinData.forEach(t => {
+        if (kategoriNilai[t.kategori] && nilaiMap[t.nilai]) {
+          kategoriNilai[t.kategori].push(nilaiMap[t.nilai]);
+        }
+      });
+
+      // Hitung rata-rata per kategori
+      let totalAvgKategori = 0;
+      let jumlahKategoriTerisi = 0;
+      
+      Object.keys(kategoriNilai).forEach(kategori => {
+        if (kategoriNilai[kategori].length > 0) {
+          const sum = kategoriNilai[kategori].reduce((a, b) => a + b, 0);
+          const avg = sum / kategoriNilai[kategori].length;
+          totalAvgKategori += avg;
+          jumlahKategoriTerisi++;
+        }
+      });
+
+      // Rata-rata keseluruhan tahsin
+      const avgNilaiTahsin = jumlahKategoriTerisi > 0 ? totalAvgKategori / jumlahKategoriTerisi : 0;
+      let nilaiTahsinFinal = 'Belum ada data';
+      if (avgNilaiTahsin >= 3.5) nilaiTahsinFinal = 'A';
+      else if (avgNilaiTahsin >= 2.5) nilaiTahsinFinal = 'B';
+      else if (avgNilaiTahsin >= 1.5) nilaiTahsinFinal = 'C';
+      else if (avgNilaiTahsin > 0) nilaiTahsinFinal = 'D';
+
+      // Hitung rata-rata nilai tahfidz
+      let totalNilaiTahfidz = 0;
+      tahfidzData.forEach(t => {
+        if (nilaiMap[t.nilai]) totalNilaiTahfidz += nilaiMap[t.nilai];
+      });
+      const avgNilaiTahfidz = tahfidzData.length > 0 ? totalNilaiTahfidz / tahfidzData.length : 0;
+      let nilaiTahfidzOtomatis = '';
+      if (avgNilaiTahfidz >= 3.5) nilaiTahfidzOtomatis = 'A';
+      else if (avgNilaiTahfidz >= 2.5) nilaiTahfidzOtomatis = 'B';
+      else if (avgNilaiTahfidz >= 1.5) nilaiTahfidzOtomatis = 'C';
+      else if (avgNilaiTahfidz > 0) nilaiTahfidzOtomatis = 'D';
+
+      // Update field otomatis
+      document.getElementById('rapor-hafalan').value = totalHalaman;
+      document.getElementById('rapor-kehadiran').value = kehadiranPersen;
+      document.getElementById('rapor-mutabaah').value = mutabaahPersen;
+      document.getElementById('rapor-tahsin').value = nilaiTahsinFinal;
+
+      // Set nilai tahfidz otomatis jika ada data
+      if (nilaiTahfidzOtomatis && avgNilaiTahfidz > 0) {
+        document.getElementById('rapor-nilai-tahfidz').value = nilaiTahfidzOtomatis;
+      }
+
+      // Tampilkan info jumlah data yang ditemukan dengan detail lebih lengkap
+      const infoDiv = document.getElementById('rapor-info');
+      if (infoDiv) {
+        let detailTahsin = '<div style="margin-top: 8px; padding: 8px; background: white; border-radius: 6px;">';
+        detailTahsin += '<p style="color: #1e40af; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Detail Nilai Tahsin per Kategori:</p>';
+        detailTahsin += '<ul style="padding-left: 20px; font-size: 11px; color: #1e40af;">';
+        
+        Object.keys(kategoriNilai).forEach(kategori => {
+          const count = kategoriNilai[kategori].length;
+          if (count > 0) {
+            const sum = kategoriNilai[kategori].reduce((a, b) => a + b, 0);
+            const avg = sum / count;
+            let huruf = '';
+            if (avg >= 3.5) huruf = 'A';
+            else if (avg >= 2.5) huruf = 'B';
+            else if (avg >= 1.5) huruf = 'C';
+            else huruf = 'D';
+            detailTahsin += `<li>${kategori}: ${count} penilaian, rata-rata ${huruf}</li>`;
+          } else {
+            detailTahsin += `<li>${kategori}: Belum ada data</li>`;
+          }
+        });
+        detailTahsin += '</ul></div>';
+
+        infoDiv.innerHTML = `
+          <div style="padding: 12px; background: #dbeafe; border-radius: 8px;">
+            <p style="color: #1e40af; font-size: 14px; font-weight: 600;">
+              📊 Data Semester Ditemukan:
+            </p>
+            <ul style="margin-top: 8px; padding-left: 20px; color: #1e40af; font-size: 13px;">
+              <li>${tahfidzData.length} penilaian Tahfidz ��� ${totalHalaman} halaman = ${totalJuz} juz ${sisaHalaman > 0 ? sisaHalaman + ' halaman' : ''}</li>
+              <li>${tahsinData.length} penilaian Tahsin (${jumlahKategoriTerisi} kategori terisi)</li>
+              <li>${absensiData.length} data absensi → ${kehadiranPersen}% kehadiran</li>
+              <li>${yaumiyahData.length} mutabaah yaumiyah → ${mutabaahPersen}% kedisiplinan</li>
+            </ul>
+            ${detailTahsin}
+          </div>
+        `;
+      }
+    }
+
+    async function submitRapor(event) {
+      event.preventDefault();
+      
+      const santriId = document.getElementById('rapor-santri').value;
+      const semester = document.getElementById('rapor-semester').value;
+      const tahunAjaran = document.getElementById('rapor-tahun').value;
+
+      const existingRapor = allRecords.find(r => 
+        r.type === 'rapor' && 
+        r.santri_id === santriId &&
+        r.semester === semester &&
+        r.tahun_ajaran === tahunAjaran
+      );
+
+      if (existingRapor) {
+        showToast('Rapor untuk santri, semester, dan tahun ajaran ini sudah ada');
+        return;
+      }
+
+      const submitBtn = document.getElementById('rapor-submit');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<div class="loading-spinner" style="margin: 0 auto;"></div>';
+
+      const result = await createRecord({
+        id: 'rapor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        type: 'rapor',
+        santri_id: santriId,
+        semester: semester,
+        tahun_ajaran: tahunAjaran,
+        total_hafalan_semester: parseInt(document.getElementById('rapor-hafalan').value) || 0,
+        rata_rata_kehadiran: parseInt(document.getElementById('rapor-kehadiran').value) || 0,
+        rata_rata_mutabaah: parseInt(document.getElementById('rapor-mutabaah').value) || 0,
+        nilai_tahsin: document.getElementById('rapor-tahsin').value,
+        nilai_tahfidz: document.getElementById('rapor-nilai-tahfidz').value,
+        predikat: document.getElementById('rapor-predikat').value,
+        catatan_pembimbing: document.getElementById('rapor-catatan').value,
+        pembimbing_email: currentUser.email,
+        tanggal: new Date().toISOString().split('T')[0],
+        waktu: new Date().toISOString()
+      });
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Simpan Rapor';
+
+      if (result.isOk) {
+        showToast('Rapor berhasil disimpan');
+        document.getElementById('rapor-form').reset();
+      } else {
+        showToast('Gagal menyimpan rapor');
+      }
+    }
+
+    function downloadRapor(id) {
+      const rapor = allRecords.find(r => r.id === id);
+      if (!rapor) return;
+
+      const mySantri = allRecords.filter(r => r.type === 'santri' && r.pembimbing_email === currentUser.email);
+      const santri = mySantri.find(s => s.nis === rapor.santri_id);
+
+      let csvContent = "RAPOR SEMESTER KETAHFIZAN\n";
+      csvContent += `Pembimbing: ${currentUser.nama}\n`;
+      csvContent += `Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}\n\n`;
+
+      csvContent += "=== IDENTITAS SANTRI ===\n";
+      csvContent += `Nama: ${santri ? santri.santri_nama : rapor.santri_id}\n`;
+      csvContent += `NIS: ${rapor.santri_id}\n`;
+      csvContent += `Kelas: ${santri ? santri.kelas : '-'}\n`;
+      csvContent += `Semester: ${rapor.semester}\n`;
+      csvContent += `Tahun Ajaran: ${rapor.tahun_ajaran}\n\n`;
+
+      csvContent += "=== CAPAIAN PEMBELAJARAN ===\n";
+      csvContent += `Total Hafalan Semester: ${rapor.total_hafalan_semester} halaman\n`;
+      csvContent += `Rata-rata Kehadiran: ${rapor.rata_rata_kehadiran}%\n`;
+      csvContent += `Rata-rata Mutabaah Yaumiyah: ${rapor.rata_rata_mutabaah}%\n`;
+      csvContent += `Nilai Tahfidz: ${rapor.nilai_tahfidz}\n`;
+      csvContent += `Nilai Tahsin: ${rapor.nilai_tahsin}\n`;
+      csvContent += `Predikat Keseluruhan: ${rapor.predikat}\n\n`;
+
+      csvContent += "=== CATATAN PEMBIMBING ===\n";
+      csvContent += `${rapor.catatan_pembimbing}\n\n`;
+
+      csvContent += "=== KETERANGAN NILAI ===\n";
+      csvContent += "A = Sangat Baik\n";
+      csvContent += "B = Baik\n";
+      csvContent += "C = Cukup\n";
+      csvContent += "D = Perlu Perbaikan\n\n";
+
+      csvContent += `Mengetahui,\n`;
+      csvContent += `Pembimbing Halaqah\n\n\n`;
+      csvContent += `${currentUser.nama}\n`;
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `Rapor_${santri ? santri.santri_nama : rapor.santri_id}_${rapor.semester}_${rapor.tahun_ajaran.replace('/', '-')}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showToast('Rapor berhasil didownload');
+    }
+
+    async function deleteRapor(id) {
+      const rapor = allRecords.find(r => r.id === id);
+      if (!rapor) return;
+
+      const mySantri = allRecords.filter(r => r.type === 'santri' && r.pembimbing_email === currentUser.email);
+      const santri = mySantri.find(s => s.nis === rapor.santri_id);
+
+      const confirmDiv = document.createElement('div');
+      confirmDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 32px; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); z-index: 1000; max-width: 400px; width: 90%;';
+      confirmDiv.innerHTML = `
+        <h3 style="margin-bottom: 16px; font-size: 20px; font-weight: 700;">Konfirmasi Hapus</h3>
+        <p style="margin-bottom: 24px; color: #64748b;">Yakin ingin menghapus rapor <strong>${santri ? santri.santri_nama : rapor.santri_id}</strong> (${rapor.semester} - ${rapor.tahun_ajaran})?</p>
+        <div style="display: flex; gap: 12px;">
+          <button id="confirm-delete" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #ef4444; color: white; cursor: pointer; font-weight: 600;">Hapus</button>
+          <button id="cancel-delete" style="flex: 1; padding: 12px; border-radius: 8px; border: 2px solid #e2e8f0; background: white; cursor: pointer; font-weight: 600;">Batal</button>
+        </div>
+      `;
+
+      const backdrop = document.createElement('div');
+      backdrop.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999;';
+
+      document.body.appendChild(backdrop);
+      document.body.appendChild(confirmDiv);
+
+      document.getElementById('cancel-delete').onclick = () => {
+        document.body.removeChild(confirmDiv);
+        document.body.removeChild(backdrop);
+      };
+
+      document.getElementById('confirm-delete').onclick = async () => {
+        const result = await deleteRecord(rapor);
+        document.body.removeChild(confirmDiv);
+        document.body.removeChild(backdrop);
+        
+        if (result.isOk) {
+          showToast('Rapor berhasil dihapus');
+        } else {
+          showToast('Gagal menghapus rapor');
+        }
+      };
+    }
+
+    async function generateWeeklyReport(event) {
+      event.preventDefault();
+      
+      const santriId = document.getElementById('weekly-santri').value;
+      const rentangTanggal = document.getElementById('weekly-rentang').value;
+      const juzTotal = parseInt(document.getElementById('weekly-juz').value);
+      const sisaHalaman = parseInt(document.getElementById('weekly-halaman').value);
+      const nilaiTahfidz = document.getElementById('weekly-nilai-tahfidz').value;
+      const nilaiTahsin = document.getElementById('weekly-nilai-tahsin').value;
+      const catatanPembimbing = document.getElementById('weekly-catatan').value;
+      
+      const mySantri = allRecords.filter(r => r.type === 'santri' && r.pembimbing_email === currentUser.email);
+      const santri = mySantri.find(s => s.nis === santriId);
+
+      const submitBtn = document.getElementById('weekly-submit');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<div class="loading-spinner" style="margin: 0 auto;"></div>';
+
+      const result = await createRecord({
+        id: 'laporan_mingguan_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        type: 'laporan_mingguan',
+        santri_id: santriId,
+        santri_nama: santri ? santri.santri_nama : '',
+        rentang_tanggal: rentangTanggal,
+        juz_total: juzTotal,
+        sisa_halaman: sisaHalaman,
+        total_hafalan: (juzTotal * 20) + sisaHalaman,
+        nilai_tahfidz: nilaiTahfidz,
+        nilai_tahsin: nilaiTahsin,
+        catatan_pembimbing: catatanPembimbing,
+        pembimbing_email: currentUser.email,
+        tanggal: new Date().toISOString().split('T')[0],
+        waktu: new Date().toISOString()
+      });
+
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fas fa-file-alt"></i> Simpan Rapor Mingguan';
+
+      if (result.isOk) {
+        showToast('Rapor mingguan berhasil disimpan');
+        document.getElementById('weekly-form').reset();
+      } else {
+        showToast('Gagal membuat rapor mingguan');
+      }
+    }
+
+    async function generateMonthlyReport(event) {
+      event.preventDefault();
+      
+      const santriId = document.getElementById('monthly-santri').value;
+      const rentangTanggal = document.getElementById('monthly-rentang').value;
+      const juzTotal = parseInt(document.getElementById('monthly-juz').value);
+      const sisaHalaman = parseInt(document.getElementById('monthly-halaman').value);
+      const nilaiTahfidz = document.getElementById('monthly-nilai-tahfidz').value;
+      const nilaiTahsin = document.getElementById('monthly-nilai-tahsin').value;
+      const catatanPembimbing = document.getElementById('monthly-catatan').value;
+      
+      const mySantri = allRecords.filter(r => r.type === 'santri' && r.pembimbing_email === currentUser.email);
+      const santri = mySantri.find(s => s.nis === santriId);
+
+      const submitBtn = document.getElementById('monthly-submit');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<div class="loading-spinner" style="margin: 0 auto;"></div>';
+
+      const result = await createRecord({
+        id: 'laporan_bulanan_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        type: 'laporan_bulanan',
+        santri_id: santriId,
+        santri_nama: santri ? santri.santri_nama : '',
+        rentang_tanggal: rentangTanggal,
+        juz_total: juzTotal,
+        sisa_halaman: sisaHalaman,
+        total_hafalan: (juzTotal * 20) + sisaHalaman,
+        nilai_tahfidz: nilaiTahfidz,
+        nilai_tahsin: nilaiTahsin,
+        catatan_pembimbing: catatanPembimbing,
+        pembimbing_email: currentUser.email,
+        tanggal: new Date().toISOString().split('T')[0],
+        waktu: new Date().toISOString()
+      });
+
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fas fa-file-alt"></i> Simpan Rapor Bulanan';
+
+      if (result.isOk) {
+        showToast('Rapor bulanan berhasil disimpan');
+        document.getElementById('monthly-form').reset();
+      } else {
+        showToast('Gagal membuat rapor bulanan');
+      }
+    }
+
+    function downloadSavedWeeklyReport(id) {
+      const report = allRecords.find(r => r.id === id);
+      if (!report) return;
+      
+      const mySantri = allRecords.filter(r => r.type === 'santri' && r.pembimbing_email === currentUser.email);
+      const santri = mySantri.find(s => s.nis === report.santri_id);
+      
+      const weeklyData = allRecords.filter(r => {
+        if (!r.tanggal || r.santri_id !== report.santri_id) return false;
+        const recordDate = new Date(r.tanggal);
+        return getWeekNumber(recordDate) === report.minggu_ke && recordDate.getFullYear() === report.tahun;
+      });
+
+      const weeklyTahfidz = weeklyData.filter(r => r.type === 'tahfidz');
+
+      let csvContent = "RAPOR MINGGUAN KETAHFIZAN\n";
+      csvContent += `Pembimbing: ${currentUser.nama}\n`;
+      csvContent += `Nama Santri: ${santri ? santri.santri_nama : report.santri_id}\n`;
+      csvContent += `NIS: ${report.santri_id}\n`;
+      csvContent += `Kelas: ${santri ? santri.kelas : '-'}\n`;
+      csvContent += `Minggu ke-${report.minggu_ke}, ${report.tahun}\n`;
+      csvContent += `Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}\n\n`;
+
+      csvContent += "=== RINGKASAN ===\n";
+      csvContent += `Total Absensi: ${report.total_absensi}\n`;
+      csvContent += `Total Hafalan Tahfidz: ${report.total_hafalan} halaman\n`;
+      csvContent += `Total Penilaian Tahfidz: ${report.total_tahfidz}\n`;
+      csvContent += `Total Penilaian Tahsin: ${report.total_tahsin}\n`;
+      csvContent += `Total Mutabaah Yaumiyah: ${report.total_yaumiyah}\n\n`;
+
+      csvContent += "=== DETAIL ABSENSI ===\n";
+      csvContent += "Tanggal,Sesi,Status\n";
+      weeklyData.filter(r => r.type === 'absensi').forEach(r => {
+        csvContent += `${r.tanggal},${r.sesi || ''},${r.status}\n`;
+      });
+
+      csvContent += "\n=== DETAIL PENILAIAN TAHFIDZ ===\n";
+      csvContent += "Tanggal,Juz,Halaman,Surah,Ayat,Nilai,Catatan\n";
+      weeklyTahfidz.forEach(r => {
+        csvContent += `${r.tanggal},${r.juz || ''},${r.halaman || ''},${r.surah || ''},${r.ayat || ''},${r.nilai},${r.catatan || ''}\n`;
+      });
+
+      csvContent += "\n=== DETAIL PENILAIAN TAHSIN ===\n";
+      csvContent += "Tanggal,Kategori,Nilai,Catatan\n";
+      weeklyData.filter(r => r.type === 'tahsin').forEach(r => {
+        csvContent += `${r.tanggal},${r.kategori || ''},${r.nilai},${r.catatan || ''}\n`;
+      });
+
+      csvContent += "\n=== DETAIL MUTABAAH YAUMIYAH ===\n";
+      csvContent += "Tanggal,Subuh,Dzuhur,Ashar,Maghrib,Isya,Rawatib,Dhuha,Lail,Puasa,Dzikir,Hadits\n";
+      weeklyData.filter(r => r.type === 'yaumiyah').forEach(r => {
+        csvContent += `${r.tanggal},`;
+        csvContent += `${r.shalat_subuh ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.shalat_dzuhur ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.shalat_ashar ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.shalat_maghrib ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.shalat_isya ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.rawatib ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.dhuha ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.lail ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.puasa_sunnah ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.dzikir ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.hafalan_hadits ? 'Ya' : 'Tidak'}\n`;
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `Rapor_Mingguan_${santri ? santri.santri_nama : report.santri_id}_Minggu${report.minggu_ke}_${report.tahun}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showToast('Rapor mingguan berhasil didownload');
+    }
+
+    function downloadSavedMonthlyReport(id) {
+      const report = allRecords.find(r => r.id === id);
+      if (!report) return;
+      
+      const mySantri = allRecords.filter(r => r.type === 'santri' && r.pembimbing_email === currentUser.email);
+      const santri = mySantri.find(s => s.nis === report.santri_id);
+      
+      const monthlyData = allRecords.filter(r => {
+        if (!r.tanggal || r.santri_id !== report.santri_id) return false;
+        const recordDate = new Date(r.tanggal);
+        return recordDate.getMonth() === report.bulan && recordDate.getFullYear() === report.tahun;
+      });
+
+      const monthlyTahfidz = monthlyData.filter(r => r.type === 'tahfidz');
+
+      let csvContent = "RAPOR BULANAN KETAHFIZAN\n";
+      csvContent += `Pembimbing: ${currentUser.nama}\n`;
+      csvContent += `Nama Santri: ${santri ? santri.santri_nama : report.santri_id}\n`;
+      csvContent += `NIS: ${report.santri_id}\n`;
+      csvContent += `Kelas: ${santri ? santri.kelas : '-'}\n`;
+      csvContent += `Periode: ${getMonthName(report.bulan)} ${report.tahun}\n`;
+      csvContent += `Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}\n\n`;
+
+      csvContent += "=== RINGKASAN ===\n";
+      csvContent += `Total Absensi: ${report.total_absensi}\n`;
+      csvContent += `Total Hafalan Tahfidz: ${report.total_hafalan} halaman\n`;
+      csvContent += `Total Penilaian Tahfidz: ${report.total_tahfidz}\n`;
+      csvContent += `Total Penilaian Tahsin: ${report.total_tahsin}\n`;
+      csvContent += `Total Mutabaah Yaumiyah: ${report.total_yaumiyah}\n\n`;
+
+      csvContent += "=== STATISTIK ABSENSI ===\n";
+      const absensiData = monthlyData.filter(r => r.type === 'absensi');
+      const hadir = absensiData.filter(r => r.status === 'Hadir').length;
+      const sakit = absensiData.filter(r => r.status === 'Sakit').length;
+      const izin = absensiData.filter(r => r.status === 'Izin').length;
+      const tk = absensiData.filter(r => r.status === 'TK').length;
+      csvContent += `Hadir: ${hadir}\n`;
+      csvContent += `Sakit: ${sakit}\n`;
+      csvContent += `Izin: ${izin}\n`;
+      csvContent += `Tanpa Keterangan: ${tk}\n\n`;
+
+      csvContent += "=== DETAIL ABSENSI ===\n";
+      csvContent += "Tanggal,Sesi,Status\n";
+      absensiData.forEach(r => {
+        csvContent += `${r.tanggal},${r.sesi || ''},${r.status}\n`;
+      });
+
+      csvContent += "\n=== DETAIL PENILAIAN TAHFIDZ ===\n";
+      csvContent += "Tanggal,Juz,Halaman,Surah,Ayat,Nilai,Catatan\n";
+      monthlyTahfidz.forEach(r => {
+        csvContent += `${r.tanggal},${r.juz || ''},${r.halaman || ''},${r.surah || ''},${r.ayat || ''},${r.nilai},${r.catatan || ''}\n`;
+      });
+
+      csvContent += "\n=== DETAIL PENILAIAN TAHSIN ===\n";
+      csvContent += "Tanggal,Kategori,Nilai,Catatan\n";
+      monthlyData.filter(r => r.type === 'tahsin').forEach(r => {
+        csvContent += `${r.tanggal},${r.kategori || ''},${r.nilai},${r.catatan || ''}\n`;
+      });
+
+      csvContent += "\n=== DETAIL MUTABAAH YAUMIYAH ===\n";
+      csvContent += "Tanggal,Subuh,Dzuhur,Ashar,Maghrib,Isya,Rawatib,Dhuha,Lail,Puasa,Dzikir,Hadits\n";
+      monthlyData.filter(r => r.type === 'yaumiyah').forEach(r => {
+        csvContent += `${r.tanggal},`;
+        csvContent += `${r.shalat_subuh ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.shalat_dzuhur ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.shalat_ashar ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.shalat_maghrib ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.shalat_isya ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.rawatib ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.dhuha ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.lail ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.puasa_sunnah ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.dzikir ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.hafalan_hadits ? 'Ya' : 'Tidak'}\n`;
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `Rapor_Bulanan_${santri ? santri.santri_nama : report.santri_id}_${getMonthName(report.bulan)}_${report.tahun}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showToast('Rapor bulanan berhasil didownload');
+    }
+
+    async function deleteWeeklyReport(id) {
+      const report = allRecords.find(r => r.id === id);
+      if (!report) return;
+
+      const confirmDiv = document.createElement('div');
+      confirmDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 32px; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); z-index: 1000; max-width: 400px; width: 90%;';
+      confirmDiv.innerHTML = `
+        <h3 style="margin-bottom: 16px; font-size: 20px; font-weight: 700;">Konfirmasi Hapus</h3>
+        <p style="margin-bottom: 24px; color: #64748b;">Yakin ingin menghapus rapor mingguan <strong>Minggu ke-${report.minggu_ke}, ${report.tahun}</strong>?</p>
+        <div style="display: flex; gap: 12px;">
+          <button id="confirm-delete" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #ef4444; color: white; cursor: pointer; font-weight: 600;">Hapus</button>
+          <button id="cancel-delete" style="flex: 1; padding: 12px; border-radius: 8px; border: 2px solid #e2e8f0; background: white; cursor: pointer; font-weight: 600;">Batal</button>
+        </div>
+      `;
+
+      const backdrop = document.createElement('div');
+      backdrop.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999;';
+
+      document.body.appendChild(backdrop);
+      document.body.appendChild(confirmDiv);
+
+      document.getElementById('cancel-delete').onclick = () => {
+        document.body.removeChild(confirmDiv);
+        document.body.removeChild(backdrop);
+      };
+
+      document.getElementById('confirm-delete').onclick = async () => {
+        const result = await deleteRecord(report);
+        document.body.removeChild(confirmDiv);
+        document.body.removeChild(backdrop);
+        
+        if (result.isOk) {
+          showToast('Rapor mingguan berhasil dihapus');
+        } else {
+          showToast('Gagal menghapus rapor mingguan');
+        }
+      };
+    }
+
+    async function deleteMonthlyReport(id) {
+      const report = allRecords.find(r => r.id === id);
+      if (!report) return;
+
+      const confirmDiv = document.createElement('div');
+      confirmDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 32px; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); z-index: 1000; max-width: 400px; width: 90%;';
+      confirmDiv.innerHTML = `
+        <h3 style="margin-bottom: 16px; font-size: 20px; font-weight: 700;">Konfirmasi Hapus</h3>
+        <p style="margin-bottom: 24px; color: #64748b;">Yakin ingin menghapus rapor bulanan <strong>${getMonthName(report.bulan)} ${report.tahun}</strong>?</p>
+        <div style="display: flex; gap: 12px;">
+          <button id="confirm-delete" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #ef4444; color: white; cursor: pointer; font-weight: 600;">Hapus</button>
+          <button id="cancel-delete" style="flex: 1; padding: 12px; border-radius: 8px; border: 2px solid #e2e8f0; background: white; cursor: pointer; font-weight: 600;">Batal</button>
+        </div>
+      `;
+
+      const backdrop = document.createElement('div');
+      backdrop.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999;';
+
+      document.body.appendChild(backdrop);
+      document.body.appendChild(confirmDiv);
+
+      document.getElementById('cancel-delete').onclick = () => {
+        document.body.removeChild(confirmDiv);
+        document.body.removeChild(backdrop);
+      };
+
+      document.getElementById('confirm-delete').onclick = async () => {
+        const result = await deleteRecord(report);
+        document.body.removeChild(confirmDiv);
+        document.body.removeChild(backdrop);
+        
+        if (result.isOk) {
+          showToast('Rapor bulanan berhasil dihapus');
+        } else {
+          showToast('Gagal menghapus rapor bulanan');
+        }
+      };
+    }
+
+    function downloadWeeklyReport() {
+      const today = new Date();
+      const currentWeek = getWeekNumber(today);
+      const currentYear = today.getFullYear();
+      
+      const myData = allRecords.filter(r => r.input_by === currentUser.email);
+      const mySantri = allRecords.filter(r => r.type === 'santri' && r.pembimbing_email === currentUser.email);
+      
+      const weeklyData = myData.filter(r => {
+        if (!r.tanggal) return false;
+        const recordDate = new Date(r.tanggal);
+        return getWeekNumber(recordDate) === currentWeek && recordDate.getFullYear() === currentYear;
+      });
+
+      const weeklyTahfidz = weeklyData.filter(r => r.type === 'tahfidz');
+      const weeklyHalamanTotal = calculateTotalPages(weeklyTahfidz);
+
+      let csvContent = "LAPORAN MINGGUAN KETAHFIZAN\n";
+      csvContent += `Pembimbing: ${currentUser.nama}\n`;
+      csvContent += `Minggu ke-${currentWeek}, ${currentYear}\n`;
+      csvContent += `Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}\n\n`;
+
+      csvContent += "=== RINGKASAN ===\n";
+      csvContent += `Total Santri: ${mySantri.length}\n`;
+      csvContent += `Total Absensi: ${weeklyData.filter(r => r.type === 'absensi').length}\n`;
+      csvContent += `Total Hafalan Tahfidz: ${weeklyHalamanTotal} halaman\n`;
+      csvContent += `Total Penilaian Tahfidz: ${weeklyTahfidz.length}\n`;
+      csvContent += `Total Penilaian Tahsin: ${weeklyData.filter(r => r.type === 'tahsin').length}\n`;
+      csvContent += `Total Mutabaah Yaumiyah: ${weeklyData.filter(r => r.type === 'yaumiyah').length}\n\n`;
+
+      csvContent += "=== DETAIL ABSENSI ===\n";
+      csvContent += "Tanggal,Sesi,NIS,Status\n";
+      weeklyData.filter(r => r.type === 'absensi').forEach(r => {
+        csvContent += `${r.tanggal},${r.sesi || ''},${r.santri_id},${r.status}\n`;
+      });
+
+      csvContent += "\n=== DETAIL PENILAIAN TAHFIDZ ===\n";
+      csvContent += "Tanggal,NIS,Juz,Halaman,Surah,Ayat,Nilai,Catatan\n";
+      weeklyTahfidz.forEach(r => {
+        csvContent += `${r.tanggal},${r.santri_id},${r.juz || ''},${r.halaman || ''},${r.surah || ''},${r.ayat || ''},${r.nilai},${r.catatan || ''}\n`;
+      });
+
+      csvContent += "\n=== DETAIL PENILAIAN TAHSIN ===\n";
+      csvContent += "Tanggal,NIS,Kategori,Nilai,Catatan\n";
+      weeklyData.filter(r => r.type === 'tahsin').forEach(r => {
+        csvContent += `${r.tanggal},${r.santri_id},${r.kategori || ''},${r.nilai},${r.catatan || ''}\n`;
+      });
+
+      csvContent += "\n=== DAFTAR SANTRI ===\n";
+      csvContent += "NIS,Nama,Kelas\n";
+      mySantri.forEach(s => {
+        csvContent += `${s.nis},${s.santri_nama},${s.kelas}\n`;
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `Laporan_Mingguan_${currentUser.nama}_Minggu${currentWeek}_${currentYear}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showToast('Laporan mingguan berhasil didownload');
+    }
+
+    function downloadMonthlyReport() {
+      const today = new Date();
+      const currentMonth = today.getMonth();
+      const currentYear = today.getFullYear();
+      
+      const myData = allRecords.filter(r => r.input_by === currentUser.email);
+      const mySantri = allRecords.filter(r => r.type === 'santri' && r.pembimbing_email === currentUser.email);
+      
+      const monthlyData = myData.filter(r => {
+        if (!r.tanggal) return false;
+        const recordDate = new Date(r.tanggal);
+        return recordDate.getMonth() === currentMonth && recordDate.getFullYear() === currentYear;
+      });
+
+      const monthlyTahfidz = monthlyData.filter(r => r.type === 'tahfidz');
+      const monthlyHalamanTotal = calculateTotalPages(monthlyTahfidz);
+
+      let csvContent = "LAPORAN BULANAN KETAHFIZAN\n";
+      csvContent += `Pembimbing: ${currentUser.nama}\n`;
+      csvContent += `Periode: ${getMonthName(currentMonth)} ${currentYear}\n`;
+      csvContent += `Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}\n\n`;
+
+      csvContent += "=== RINGKASAN ===\n";
+      csvContent += `Total Santri: ${mySantri.length}\n`;
+      csvContent += `Total Absensi: ${monthlyData.filter(r => r.type === 'absensi').length}\n`;
+      csvContent += `Total Hafalan Tahfidz: ${monthlyHalamanTotal} halaman\n`;
+      csvContent += `Total Penilaian Tahfidz: ${monthlyTahfidz.length}\n`;
+      csvContent += `Total Penilaian Tahsin: ${monthlyData.filter(r => r.type === 'tahsin').length}\n`;
+      csvContent += `Total Mutabaah Yaumiyah: ${monthlyData.filter(r => r.type === 'yaumiyah').length}\n\n`;
+
+      csvContent += "=== STATISTIK ABSENSI PER SANTRI ===\n";
+      csvContent += "NIS,Nama,Kelas,Hadir,Sakit,Izin,Tanpa Keterangan\n";
+      mySantri.forEach(santri => {
+        const absensiSantri = monthlyData.filter(r => r.type === 'absensi' && r.santri_id === santri.nis);
+        const hadir = absensiSantri.filter(r => r.status === 'Hadir').length;
+        const sakit = absensiSantri.filter(r => r.status === 'Sakit').length;
+        const izin = absensiSantri.filter(r => r.status === 'Izin').length;
+        const tk = absensiSantri.filter(r => r.status === 'TK').length;
+        csvContent += `${santri.nis},${santri.santri_nama},${santri.kelas},${hadir},${sakit},${izin},${tk}\n`;
+      });
+
+      csvContent += "\n=== DETAIL ABSENSI ===\n";
+      csvContent += "Tanggal,Sesi,NIS,Nama,Status\n";
+      monthlyData.filter(r => r.type === 'absensi').forEach(r => {
+        const santri = mySantri.find(s => s.nis === r.santri_id);
+        csvContent += `${r.tanggal},${r.sesi || ''},${r.santri_id},${santri ? santri.santri_nama : ''},${r.status}\n`;
+      });
+
+      csvContent += "\n=== DETAIL PENILAIAN TAHFIDZ ===\n";
+      csvContent += "Tanggal,NIS,Nama,Juz,Halaman,Surah,Ayat,Nilai,Catatan\n";
+      monthlyTahfidz.forEach(r => {
+        const santri = mySantri.find(s => s.nis === r.santri_id);
+        csvContent += `${r.tanggal},${r.santri_id},${santri ? santri.santri_nama : ''},${r.juz || ''},${r.halaman || ''},${r.surah || ''},${r.ayat || ''},${r.nilai},${r.catatan || ''}\n`;
+      });
+
+      csvContent += "\n=== DETAIL PENILAIAN TAHSIN ===\n";
+      csvContent += "Tanggal,NIS,Nama,Kategori,Nilai,Catatan\n";
+      monthlyData.filter(r => r.type === 'tahsin').forEach(r => {
+        const santri = mySantri.find(s => s.nis === r.santri_id);
+        csvContent += `${r.tanggal},${r.santri_id},${santri ? santri.santri_nama : ''},${r.kategori || ''},${r.nilai},${r.catatan || ''}\n`;
+      });
+
+      csvContent += "\n=== DETAIL MUTABAAH YAUMIYAH ===\n";
+      csvContent += "Tanggal,NIS,Nama,Subuh,Dzuhur,Ashar,Maghrib,Isya,Rawatib,Dhuha,Lail,Puasa,Dzikir,Hadits\n";
+      monthlyData.filter(r => r.type === 'yaumiyah').forEach(r => {
+        const santri = mySantri.find(s => s.nis === r.santri_id);
+        csvContent += `${r.tanggal},${r.santri_id},${santri ? santri.santri_nama : ''},`;
+        csvContent += `${r.shalat_subuh ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.shalat_dzuhur ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.shalat_ashar ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.shalat_maghrib ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.shalat_isya ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.rawatib ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.dhuha ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.lail ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.puasa_sunnah ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.dzikir ? 'Ya' : 'Tidak'},`;
+        csvContent += `${r.hafalan_hadits ? 'Ya' : 'Tidak'}\n`;
+      });
+
+      csvContent += "\n=== DAFTAR SANTRI ===\n";
+      csvContent += "NIS,Nama,Kelas\n";
+      mySantri.forEach(s => {
+        csvContent += `${s.nis},${s.santri_nama},${s.kelas}\n`;
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `Laporan_Bulanan_${currentUser.nama}_${getMonthName(currentMonth)}_${currentYear}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showToast('Laporan bulanan berhasil didownload');
+    }
+
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.textContent = message;
+      toast.style.cssText = 'position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 16px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 2000; font-weight: 600;';
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => document.body.removeChild(toast), 300);
+      }, 3000);
+    }
+
+    initializeApp();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9b77155030bf3bdd',t:'MTc2NzMyMzYzNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
