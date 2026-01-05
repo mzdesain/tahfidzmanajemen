@@ -103,24 +103,69 @@
       background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
       box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
     }
+    
+    /* Responsive styles */
+    @media (max-width: 768px) {
+      .toast {
+        max-width: 90%;
+        font-size: 0.875rem;
+      }
+      
+      /* Responsive table wrapper */
+      .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      .table-responsive table {
+        min-width: 600px;
+      }
+      
+      /* Mobile modal adjustments */
+      .modal-backdrop > div {
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+    }
+    
+    @media (max-width: 640px) {
+      /* Adjust stats cards text size on mobile */
+      .stat-card-value {
+        font-size: 1.75rem !important;
+      }
+      
+      .stat-card-label {
+        font-size: 0.75rem !important;
+      }
+      
+      /* Menu grid responsive */
+      .menu-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+      
+      /* Adjust form inputs */
+      input, select, textarea {
+        font-size: 16px !important; /* Prevents zoom on iOS */
+      }
+    }
   </style>
   <style>@view-transition { navigation: auto; }</style>
   <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
  </head>
  <body class="h-full">
   <div id="app" class="h-full w-full overflow-auto" style="background: #FFFFFF;"><!-- Top Navigation -->
-   <nav class="bg-white sticky top-0 z-50 border-b-2 border-gray-300">
-    <div class="px-4 py-3">
-     <div class="flex items-center justify-between mb-3">
-      <div class="flex items-center space-x-3"><img src="https://ypwi.or.id/assets/setting/front/meta/image.png" alt="Logo Pondok" class="w-14 h-14 object-contain">
-       <div>
-        <h1 id="app-title" class="text-xl font-bold text-gray-800">Sistem Monitoring Hafalan Santri</h1>
-        <p id="madrasah-name" class="text-xs text-gray-600">Ma'had Abu Bakar Ash-Shiddiq Anabanua, Kab. Wajo</p>
+   <nav class="bg-white shadow-md sticky top-0 z-50 border-b-2 border-gray-300">
+    <div class="px-3 sm:px-4 py-2 sm:py-3">
+     <div class="flex items-center justify-between mb-2 sm:mb-3">
+      <div class="flex items-center space-x-2 sm:space-x-3"><img src="https://ypwi.or.id/assets/setting/front/meta/image.png" alt="Logo Pondok" class="w-10 h-10 sm:w-14 sm:h-14 object-contain flex-shrink-0">
+       <div class="min-w-0">
+        <h1 id="app-title" class="text-sm sm:text-lg md:text-xl font-bold text-gray-800 leading-tight">Sistem Monitoring Hafalan Santri</h1>
+        <p id="madrasah-name" class="text-xs text-gray-600 truncate">Ma'had Abu Bakar Ash-Shiddiq Anabanua</p>
        </div>
       </div>
      </div>
      <div class="scrollable-nav overflow-x-auto">
-      <div class="flex space-x-2 pb-2" style="min-width: max-content;"><button onclick="window.showPage('dashboard', event)" class="nav-btn px-4 py-2 rounded-md bg-gray-800 text-white text-sm font-medium whitespace-nowrap transition"> <i class="fas fa-home mr-1"></i>Dashboard </button> <button onclick="window.showPage('kelola-pembimbing', event)" class="nav-btn px-4 py-2 rounded-md bg-gray-200 text-gray-700 text-sm font-medium whitespace-nowrap hover:bg-gray-300 transition"> <i class="fas fa-users mr-1"></i>Kelola Pembimbing </button> <button onclick="window.showPage('pembimbing', event)" class="nav-btn px-4 py-2 rounded-md bg-gray-200 text-gray-700 text-sm font-medium whitespace-nowrap hover:bg-gray-300 transition"> <i class="fas fa-chalkboard-teacher mr-1"></i>Menu Pembimbing </button> <button onclick="window.showPage('kelola-sesi', event)" class="nav-btn px-4 py-2 rounded-md bg-gray-200 text-gray-700 text-sm font-medium whitespace-nowrap hover:bg-gray-300 transition"> <i class="fas fa-clock mr-1"></i>Kelola Sesi </button>
+      <div class="flex space-x-1 sm:space-x-2 pb-2" style="min-width: max-content;"><button onclick="window.showPage('dashboard', event)" class="nav-btn px-2 sm:px-4 py-1.5 sm:py-2 rounded-md bg-gray-800 text-white text-xs sm:text-sm font-medium whitespace-nowrap transition"> <i class="fas fa-home mr-1"></i><span class="hidden xs:inline">Dashboard</span><span class="xs:hidden">Home</span> </button> <button onclick="window.showPage('kelola-pembimbing', event)" class="nav-btn px-2 sm:px-4 py-1.5 sm:py-2 rounded-md bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium whitespace-nowrap hover:bg-gray-300 transition"> <i class="fas fa-users mr-1"></i><span class="hidden sm:inline">Kelola Pembimbing</span><span class="sm:hidden">Pembimbing</span> </button> <button onclick="window.showPage('pembimbing', event)" class="nav-btn px-2 sm:px-4 py-1.5 sm:py-2 rounded-md bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium whitespace-nowrap hover:bg-gray-300 transition"> <i class="fas fa-chalkboard-teacher mr-1"></i><span class="hidden sm:inline">Menu Pembimbing</span><span class="sm:hidden">Menu</span> </button> <button onclick="window.showPage('kelola-sesi', event)" class="nav-btn px-2 sm:px-4 py-1.5 sm:py-2 rounded-md bg-gray-200 text-gray-700 text-xs sm:text-sm font-medium whitespace-nowrap hover:bg-gray-300 transition"> <i class="fas fa-clock mr-1"></i><span class="hidden sm:inline">Kelola Sesi</span><span class="sm:hidden">Sesi</span> </button>
       </div>
      </div>
     </div>
@@ -139,50 +184,48 @@
      </form>
     </div>
    </div><!-- Main Content -->
-   <div class="p-6"><!-- Dashboard Page -->
+   <div class="p-3 sm:p-4 md:p-6"><!-- Dashboard Page -->
     <div id="page-dashboard" class="page-content">
-     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl shadow-lg p-6 transform hover:scale-105 transition duration-300">
+     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
+      <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl shadow-lg p-4 sm:p-6 transform hover:scale-105 transition duration-300">
        <div class="flex items-center justify-between">
         <div>
-         <p class="text-blue-100 text-sm mb-1">Total Pembimbing</p>
-         <p id="total-pembimbing" class="text-3xl font-bold">0</p>
+         <p class="text-blue-100 text-xs sm:text-sm mb-1 stat-card-label">Total Pembimbing</p>
+         <p id="total-pembimbing" class="text-2xl sm:text-3xl font-bold stat-card-value">0</p>
         </div>
-        <div class="bg-white bg-opacity-20 rounded-full p-4"><i class="fas fa-chalkboard-teacher text-3xl"></i>
+        <div class="bg-white bg-opacity-20 rounded-full p-3 sm:p-4"><i class="fas fa-chalkboard-teacher text-2xl sm:text-3xl"></i>
         </div>
        </div>
       </div>
-      <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl shadow-lg p-6 transform hover:scale-105 transition duration-300">
+      <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl shadow-lg p-4 sm:p-6 transform hover:scale-105 transition duration-300">
        <div class="flex items-center justify-between">
         <div>
-         <p class="text-green-100 text-sm mb-1">Total Santri</p>
-         <p id="total-santri" class="text-3xl font-bold">0</p>
+         <p class="text-green-100 text-xs sm:text-sm mb-1 stat-card-label">Total Santri</p>
+         <p id="total-santri" class="text-2xl sm:text-3xl font-bold stat-card-value">0</p>
         </div>
-        <div class="bg-white bg-opacity-20 rounded-full p-4"><i class="fas fa-user-graduate text-3xl"></i>
+        <div class="bg-white bg-opacity-20 rounded-full p-3 sm:p-4"><i class="fas fa-user-graduate text-2xl sm:text-3xl"></i>
         </div>
        </div>
       </div>
-      <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl shadow-lg p-6 transform hover:scale-105 transition duration-300">
+      <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-xl shadow-lg p-4 sm:p-6 transform hover:scale-105 transition duration-300 sm:col-span-2 lg:col-span-1">
        <div class="flex items-center justify-between">
         <div>
-         <p class="text-purple-100 text-sm mb-1">Rata-rata Hafalan</p>
-         <p id="avg-hafalan" class="text-3xl font-bold">0 Juz</p>
+         <p class="text-purple-100 text-xs sm:text-sm mb-1 stat-card-label">Rata-rata Hafalan</p>
+         <p id="avg-hafalan" class="text-2xl sm:text-3xl font-bold stat-card-value">0 Juz</p>
         </div>
-        <div class="bg-white bg-opacity-20 rounded-full p-4"><i class="fas fa-book-quran text-3xl"></i>
+        <div class="bg-white bg-opacity-20 rounded-full p-3 sm:p-4"><i class="fas fa-book-quran text-2xl sm:text-3xl"></i>
         </div>
        </div>
       </div>
      </div>
-     <div class="bg-gradient-to-r from-indigo-50 to-purple-50 border-l-4 border-indigo-600 rounded-lg shadow-md p-6">
+     <div class="bg-gradient-to-r from-indigo-50 to-purple-50 border-l-4 border-indigo-600 rounded-lg shadow-md p-4 sm:p-6">
       <div class="flex items-start">
-       <div class="flex-shrink-0"><i class="fas fa-info-circle text-3xl text-indigo-600"></i>
+       <div class="flex-shrink-0"><i class="fas fa-info-circle text-2xl sm:text-3xl text-indigo-600"></i>
        </div>
-       <div class="ml-4">
-        <h3 class="text-lg font-bold text-gray-800 mb-2 text-justify">Selamat Datang di Sistem Monitpring Hafalan Santri</h3>
-        <p class="text-gray-700 text-sm mb-2 leading-relaxed">Sistem ini membantu Muhaffizh dan Muhaffizhah untuk mengelola dan memantau perkembangan hafalan santri secara terstruktur dan profesional.</p>
-        <p class="text-sm text-gray-600 bg-white bg-opacity-60 rounded-lg p-3 mt-3 text-justify"><strong>Tips 1:</strong> Mulai dengan menambahkan data pembimbing di menu <span class="font-semibold text-black-700">Kelola Pembimbing</span>, kemudian masuk ke <span class="font-semibold text-black-700">Menu Pembimbing</span> untuk mengelola santri dan input data hafalan.</p>
-        <p class="text-sm text-gray-600 bg-white bg-opacity-60 rounded-lg p-3 mt-3 text-justify"><strong>Tips 2:</strong> Untuk penginputan data harian <span class="font-semibold text-black-700">bisa menggunakan HP atau laptop.</span> Adapun untuk download laporan pekanan, bulanan dan rapor semester, <span class="font-semibold text-black-700">disarankan untuk menggunakan LAPTOP</span> agar hasil downloadnya rapi.</p>
-       </div>
+       <div class="ml-3 sm:ml-4 flex-1 min-w-0">
+        <h3 class="text-base sm:text-lg font-bold text-gray-800 mb-2">Selamat Datang di Sistem Tahfidz 📖</h3>
+        <p class="text-gray-700 text-xs sm:text-sm mb-2 leading-relaxed">Sistem ini membantu Anda mengelola dan memantau perkembangan hafalan santri secara terstruktur dan profesional.</p>
+        <p class="text-xs sm:text-sm text-gray-600 bg-white bg-opacity-60 rounded-lg p-2 sm:p-3 mt-3">💡 <strong>Tips:</strong> Mulai dengan menambahkan data pembimbing di menu <span class="font-semibold text-indigo-700">Kelola Pembimbing</span>, kemudian masuk ke <span class="font-semibold text-indigo-700">Menu Pembimbing</span> untuk mengelola santri dan input data hafalan.</p>
        </div>
       </div>
      </div>
@@ -208,7 +251,7 @@
       <div id="pembimbing-cards" class="grid grid-cols-1 md:grid-cols-3 gap-3"></div>
      </div>
      <div id="pembimbing-menu" class="hidden">
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"><button onclick="window.showSubMenu('kelola-santri')" class="bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl shadow-lg p-6 transition transform hover:scale-105"> <i class="fas fa-user-graduate text-4xl mb-3"></i> <p class="text-sm font-semibold">Kelola Santri</p></button> <button onclick="window.showSubMenu('tahun-ajaran')" class="bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl shadow-lg p-6 transition transform hover:scale-105"> <i class="fas fa-calendar-alt text-4xl mb-3"></i> <p class="text-sm font-semibold">Tahun Ajaran</p></button> <button onclick="window.showSubMenu('input-hafalan')" class="bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl shadow-lg p-6 transition transform hover:scale-105"> <i class="fas fa-book-quran text-4xl mb-3"></i> <p class="text-sm font-semibold">Input Hafalan</p></button> <button onclick="window.showSubMenu('input-tahsin')" class="bg-gradient-to-br from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white rounded-xl shadow-lg p-6 transition transform hover:scale-105"> <i class="fas fa-spell-check text-4xl mb-3"></i> <p class="text-sm font-semibold">Input Tahsin</p></button> <button onclick="window.showSubMenu('input-murajaah')" class="bg-gradient-to-br from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white rounded-xl shadow-lg p-6 transition transform hover:scale-105"> <i class="fas fa-redo text-4xl mb-3"></i> <p class="text-sm font-semibold">Input Murajaah</p></button> <button onclick="window.showSubMenu('input-hadits')" class="bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl shadow-lg p-6 transition transform hover:scale-105"> <i class="fas fa-scroll text-4xl mb-3"></i> <p class="text-sm font-semibold">Input Hadits</p></button> <button onclick="window.showSubMenu('mutabaah')" class="bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-xl shadow-lg p-6 transition transform hover:scale-105"> <i class="fas fa-check-double text-4xl mb-3"></i> <p class="text-sm font-semibold">Mutaba'ah</p></button> <button onclick="window.showSubMenu('absensi')" class="bg-gradient-to-br from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white rounded-xl shadow-lg p-6 transition transform hover:scale-105"> <i class="fas fa-clipboard-check text-4xl mb-3"></i> <p class="text-sm font-semibold">Absensi</p></button> <button onclick="window.showSubMenu('tasmi')" class="bg-gradient-to-br from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white rounded-xl shadow-lg p-6 transition transform hover:scale-105"> <i class="fas fa-headphones text-4xl mb-3"></i> <p class="text-sm font-semibold">Tasmi'</p></button> <button onclick="window.showSubMenu('laporan-pekanan')" class="bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl shadow-lg p-6 transition transform hover:scale-105"> <i class="fas fa-file-alt text-4xl mb-3"></i> <p class="text-sm font-semibold">Laporan Pekanan</p></button> <button onclick="window.showSubMenu('laporan-bulanan')" class="bg-gradient-to-br from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white rounded-xl shadow-lg p-6 transition transform hover:scale-105"> <i class="fas fa-file-pdf text-4xl mb-3"></i> <p class="text-sm font-semibold">Laporan Bulanan</p></button> <button onclick="window.showSubMenu('rapor-semester')" class="bg-gradient-to-br from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 text-white rounded-xl shadow-lg p-6 transition transform hover:scale-105"> <i class="fas fa-graduation-cap text-4xl mb-3"></i> <p class="text-sm font-semibold">Rapor Semester</p></button>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6 menu-grid"><button onclick="window.showSubMenu('kelola-santri')" class="bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg sm:rounded-xl shadow-lg p-3 sm:p-4 md:p-6 transition transform hover:scale-105"> <i class="fas fa-user-graduate text-2xl sm:text-3xl md:text-4xl mb-2 sm:mb-3"></i> <p class="text-xs sm:text-sm font-semibold">Kelola Santri</p></button> <button onclick="window.showSubMenu('tahun-ajaran')" class="bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg sm:rounded-xl shadow-lg p-3 sm:p-4 md:p-6 transition transform hover:scale-105"> <i class="fas fa-calendar-alt text-2xl sm:text-3xl md:text-4xl mb-2 sm:mb-3"></i> <p class="text-xs sm:text-sm font-semibold">Tahun Ajaran</p></button> <button onclick="window.showSubMenu('input-hafalan')" class="bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-lg sm:rounded-xl shadow-lg p-3 sm:p-4 md:p-6 transition transform hover:scale-105"> <i class="fas fa-book-quran text-2xl sm:text-3xl md:text-4xl mb-2 sm:mb-3"></i> <p class="text-xs sm:text-sm font-semibold">Input Hafalan</p></button> <button onclick="window.showSubMenu('input-tahsin')" class="bg-gradient-to-br from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white rounded-lg sm:rounded-xl shadow-lg p-3 sm:p-4 md:p-6 transition transform hover:scale-105"> <i class="fas fa-spell-check text-2xl sm:text-3xl md:text-4xl mb-2 sm:mb-3"></i> <p class="text-xs sm:text-sm font-semibold">Input Tahsin</p></button> <button onclick="window.showSubMenu('input-murajaah')" class="bg-gradient-to-br from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white rounded-lg sm:rounded-xl shadow-lg p-3 sm:p-4 md:p-6 transition transform hover:scale-105"> <i class="fas fa-redo text-2xl sm:text-3xl md:text-4xl mb-2 sm:mb-3"></i> <p class="text-xs sm:text-sm font-semibold">Input Murajaah</p></button> <button onclick="window.showSubMenu('input-hadits')" class="bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg sm:rounded-xl shadow-lg p-3 sm:p-4 md:p-6 transition transform hover:scale-105"> <i class="fas fa-scroll text-2xl sm:text-3xl md:text-4xl mb-2 sm:mb-3"></i> <p class="text-xs sm:text-sm font-semibold">Input Hadits</p></button> <button onclick="window.showSubMenu('mutabaah')" class="bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-lg sm:rounded-xl shadow-lg p-3 sm:p-4 md:p-6 transition transform hover:scale-105"> <i class="fas fa-check-double text-2xl sm:text-3xl md:text-4xl mb-2 sm:mb-3"></i> <p class="text-xs sm:text-sm font-semibold">Mutaba'ah</p></button> <button onclick="window.showSubMenu('absensi')" class="bg-gradient-to-br from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white rounded-lg sm:rounded-xl shadow-lg p-3 sm:p-4 md:p-6 transition transform hover:scale-105"> <i class="fas fa-clipboard-check text-2xl sm:text-3xl md:text-4xl mb-2 sm:mb-3"></i> <p class="text-xs sm:text-sm font-semibold">Absensi</p></button> <button onclick="window.showSubMenu('tasmi')" class="bg-gradient-to-br from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white rounded-lg sm:rounded-xl shadow-lg p-3 sm:p-4 md:p-6 transition transform hover:scale-105"> <i class="fas fa-headphones text-2xl sm:text-3xl md:text-4xl mb-2 sm:mb-3"></i> <p class="text-xs sm:text-sm font-semibold">Tasmi'</p></button> <button onclick="window.showSubMenu('laporan-pekanan')" class="bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg sm:rounded-xl shadow-lg p-3 sm:p-4 md:p-6 transition transform hover:scale-105"> <i class="fas fa-file-alt text-2xl sm:text-3xl md:text-4xl mb-2 sm:mb-3"></i> <p class="text-xs sm:text-sm font-semibold">Laporan Pekanan</p></button> <button onclick="window.showSubMenu('laporan-bulanan')" class="bg-gradient-to-br from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white rounded-lg sm:rounded-xl shadow-lg p-3 sm:p-4 md:p-6 transition transform hover:scale-105"> <i class="fas fa-file-pdf text-2xl sm:text-3xl md:text-4xl mb-2 sm:mb-3"></i> <p class="text-xs sm:text-sm font-semibold">Laporan Bulanan</p></button> <button onclick="window.showSubMenu('rapor-semester')" class="bg-gradient-to-br from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 text-white rounded-lg sm:rounded-xl shadow-lg p-3 sm:p-4 md:p-6 transition transform hover:scale-105"> <i class="fas fa-graduation-cap text-2xl sm:text-3xl md:text-4xl mb-2 sm:mb-3"></i> <p class="text-xs sm:text-sm font-semibold">Rapor Semester</p></button>
       </div><!-- Sub Menus -->
       <div id="submenu-kelola-santri" class="submenu-content hidden bg-white rounded-lg shadow-lg p-6"><button onclick="window.hideSubMenu()" class="mb-4 text-indigo-600 hover:text-indigo-800"> <i class="fas fa-arrow-left mr-2"></i>Kembali </button>
        <h3 class="text-xl font-bold text-gray-800 mb-4">Kelola Santri</h3>
@@ -249,7 +292,7 @@
         <div><label for="santri-hafalan" class="block text-sm font-medium text-gray-700 mb-1">Nama Santri</label> <select id="santri-hafalan" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"> <option value="">-- Pilih Santri --</option> </select>
         </div>
         <div class="bg-blue-50 border border-blue-300 rounded-lg p-3 mb-2">
-         <p class="text-sm text-blue-800 font-medium mb-1">Range Hafalan (Dari - Sampai)</p>
+         <p class="text-sm text-blue-800 font-medium mb-1">📖 Range Hafalan (Dari - Sampai)</p>
          <p class="text-xs text-blue-700">Contoh: Juz 30 Hal 582 sampai Juz 30 Hal 584 = 3 halaman</p>
         </div>
         <div class="grid grid-cols-2 gap-4">
@@ -292,7 +335,7 @@
         <div><label for="santri-murajaah" class="block text-sm font-medium text-gray-700 mb-1">Nama Santri</label> <select id="santri-murajaah" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"> <option value="">-- Pilih Santri --</option> </select>
         </div>
         <div class="bg-blue-50 border border-blue-300 rounded-lg p-3 mb-2">
-         <p class="text-sm text-blue-800 font-medium mb-1">Range Murajaah (Dari - Sampai)</p>
+         <p class="text-sm text-blue-800 font-medium mb-1">🔄 Range Murajaah (Dari - Sampai)</p>
          <p class="text-xs text-blue-700">Contoh: Juz 1 Hal 2 sampai Juz 3 Hal 61 = 60 halaman</p>
         </div>
         <div class="grid grid-cols-2 gap-4">
@@ -322,7 +365,7 @@
         <div><label for="santri-hadits" class="block text-sm font-medium text-gray-700 mb-1">Nama Santri</label> <select id="santri-hadits" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"> <option value="">-- Pilih Santri --</option> </select>
         </div>
         <div class="bg-blue-50 border border-blue-300 rounded-lg p-3 mb-2">
-         <p class="text-sm text-blue-800 font-medium mb-1">Range Hadits (Dari - Sampai)</p>
+         <p class="text-sm text-blue-800 font-medium mb-1">📜 Range Hadits (Dari - Sampai)</p>
          <p class="text-xs text-blue-700">Contoh: Hadits 1 sampai Hadits 5 = 5 hadits</p>
         </div>
         <div class="grid grid-cols-2 gap-4">
@@ -347,7 +390,7 @@
         </div>
         <div class="space-y-2">
          <p class="font-medium text-gray-700">Aktivitas Harian:</p>
-         <div class="grid grid-cols-2 gap-3"><label class="flex items-center space-x-2"> <input type="checkbox" id="check-subuh" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Shalat Subuh</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-zhuhur" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Shalat Zhuhur</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-ashar" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Shalat Ashar</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-maghrib" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Shalat Maghrib</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-isya" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Shalat Isya</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-dhuha" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Dhuha</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-qiyam" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Qiyamul Lail</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-rawatib" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Rawatib</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-dzikir" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Dzikir Pagi-Petang</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-puasa" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Puasa Sunnah</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-hafalan-hadits" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Hafalan Hadits</span> </label>
+         <div class="grid grid-cols-2 gap-3"><label class="flex items-center space-x-2"> <input type="checkbox" id="check-subuh" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Shalat Subuh</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-zhuhur" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Zhuhur</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-ashar" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Ashar</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-maghrib" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Maghrib</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-isya" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Isya</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-dhuha" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Dhuha</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-qiyam" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Qiyamul Lail</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-rawatib" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Rawatib</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-dzikir" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Dzikir Pagi-Petang</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-puasa" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Puasa Sunnah</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-hafalan-hadits" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Hafalan Hadits</span> </label>
          </div>
         </div>
         <div class="bg-indigo-50 p-3 rounded-lg">
@@ -389,58 +432,64 @@
         </div><button type="submit" id="btn-submit-tasmi" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700"> <i class="fas fa-save mr-2"></i>Simpan Tasmi' </button>
        </form>
       </div>
-      <div id="submenu-laporan-pekanan" class="submenu-content hidden bg-white rounded-lg shadow-lg p-6"><button onclick="window.hideSubMenu()" class="mb-4 text-indigo-600 hover:text-indigo-800"> <i class="fas fa-arrow-left mr-2"></i>Kembali </button>
-       <h3 class="text-xl font-bold text-gray-800 mb-4">Laporan Pekanan</h3>
+      <div id="submenu-laporan-pekanan" class="submenu-content hidden bg-white rounded-lg shadow-lg p-4 sm:p-6"><button onclick="window.hideSubMenu()" class="mb-4 text-indigo-600 hover:text-indigo-800 text-sm sm:text-base"> <i class="fas fa-arrow-left mr-2"></i>Kembali </button>
+       <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-4">Laporan Pekanan</h3>
        <form id="form-laporan-pekanan" class="space-y-4 mb-6 p-4 bg-gray-50 rounded-lg" onsubmit="event.preventDefault(); window.tampilkanLaporanPekanan();">
         <div><label for="santri-laporan-pekanan" class="block text-sm font-medium text-gray-700 mb-1">Pilih Santri</label> <select id="santri-laporan-pekanan" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"> <option value="">-- Pilih Santri --</option> </select>
         </div>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
          <div><label for="tanggal-mulai-pekanan" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai</label> <input type="date" id="tanggal-mulai-pekanan" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
          </div>
          <div><label for="tanggal-selesai-pekanan" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Selesai</label> <input type="date" id="tanggal-selesai-pekanan" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
          </div>
-        </div><button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700"> <i class="fas fa-eye mr-2"></i>Tampilkan Laporan </button>
+        </div><button type="submit" class="w-full sm:w-auto bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700"> <i class="fas fa-eye mr-2"></i>Tampilkan Laporan </button>
        </form>
        <div id="preview-laporan-pekanan" class="hidden">
-        <div class="flex justify-end mb-4"><button onclick="window.cetakLaporanPekanan()" class="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700"> <i class="fas fa-print mr-2"></i>Cetak PDF </button>
+        <div class="flex justify-end mb-4"><button onclick="window.cetakLaporanPekanan()" class="bg-green-600 text-white px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base font-medium hover:bg-green-700"> <i class="fas fa-print mr-2"></i>Cetak PDF </button>
         </div>
-        <div id="content-laporan-pekanan" class="bg-white border border-gray-300 rounded-lg p-8"></div>
+        <div class="table-responsive">
+         <div id="content-laporan-pekanan" class="bg-white border border-gray-300 rounded-lg p-4 sm:p-6 md:p-8"></div>
+        </div>
        </div>
       </div>
-      <div id="submenu-laporan-bulanan" class="submenu-content hidden bg-white rounded-lg shadow-lg p-6"><button onclick="window.hideSubMenu()" class="mb-4 text-indigo-600 hover:text-indigo-800"> <i class="fas fa-arrow-left mr-2"></i>Kembali </button>
-       <h3 class="text-xl font-bold text-gray-800 mb-4">Laporan Bulanan</h3>
+      <div id="submenu-laporan-bulanan" class="submenu-content hidden bg-white rounded-lg shadow-lg p-4 sm:p-6"><button onclick="window.hideSubMenu()" class="mb-4 text-indigo-600 hover:text-indigo-800 text-sm sm:text-base"> <i class="fas fa-arrow-left mr-2"></i>Kembali </button>
+       <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-4">Laporan Bulanan</h3>
        <form id="form-laporan-bulanan" class="space-y-4 mb-6 p-4 bg-gray-50 rounded-lg" onsubmit="event.preventDefault(); window.tampilkanLaporanBulanan();">
         <div><label for="santri-laporan-bulanan" class="block text-sm font-medium text-gray-700 mb-1">Pilih Santri</label> <select id="santri-laporan-bulanan" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"> <option value="">-- Pilih Santri --</option> </select>
         </div>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
          <div><label for="bulan-laporan" class="block text-sm font-medium text-gray-700 mb-1">Bulan</label> <select id="bulan-laporan" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"> <option value="">-- Pilih Bulan --</option> <option value="1">Januari</option> <option value="2">Februari</option> <option value="3">Maret</option> <option value="4">April</option> <option value="5">Mei</option> <option value="6">Juni</option> <option value="7">Juli</option> <option value="8">Agustus</option> <option value="9">September</option> <option value="10">Oktober</option> <option value="11">November</option> <option value="12">Desember</option> </select>
          </div>
          <div><label for="tahun-laporan" class="block text-sm font-medium text-gray-700 mb-1">Tahun</label> <input type="number" id="tahun-laporan" min="2000" max="2100" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
          </div>
-        </div><button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700"> <i class="fas fa-eye mr-2"></i>Tampilkan Laporan </button>
+        </div><button type="submit" class="w-full sm:w-auto bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700"> <i class="fas fa-eye mr-2"></i>Tampilkan Laporan </button>
        </form>
        <div id="preview-laporan-bulanan" class="hidden">
-        <div class="flex justify-end mb-4"><button onclick="window.cetakLaporanBulanan()" class="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700"> <i class="fas fa-print mr-2"></i>Cetak PDF </button>
+        <div class="flex justify-end mb-4"><button onclick="window.cetakLaporanBulanan()" class="bg-green-600 text-white px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base font-medium hover:bg-green-700"> <i class="fas fa-print mr-2"></i>Cetak PDF </button>
         </div>
-        <div id="content-laporan-bulanan" class="bg-white border border-gray-300 rounded-lg p-8"></div>
+        <div class="table-responsive">
+         <div id="content-laporan-bulanan" class="bg-white border border-gray-300 rounded-lg p-4 sm:p-6 md:p-8"></div>
+        </div>
        </div>
       </div>
-      <div id="submenu-rapor-semester" class="submenu-content hidden bg-white rounded-lg shadow-lg p-6"><button onclick="window.hideSubMenu()" class="mb-4 text-indigo-600 hover:text-indigo-800"> <i class="fas fa-arrow-left mr-2"></i>Kembali </button>
-       <h3 class="text-xl font-bold text-gray-800 mb-4">Rapor Semester</h3>
+      <div id="submenu-rapor-semester" class="submenu-content hidden bg-white rounded-lg shadow-lg p-4 sm:p-6"><button onclick="window.hideSubMenu()" class="mb-4 text-indigo-600 hover:text-indigo-800 text-sm sm:text-base"> <i class="fas fa-arrow-left mr-2"></i>Kembali </button>
+       <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-4">Rapor Semester</h3>
        <form id="form-rapor-semester" class="space-y-4 mb-6 p-4 bg-gray-50 rounded-lg" onsubmit="event.preventDefault(); window.tampilkanRaporSemester();">
         <div><label for="santri-rapor" class="block text-sm font-medium text-gray-700 mb-1">Pilih Santri</label> <select id="santri-rapor" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"> <option value="">-- Pilih Santri --</option> </select>
         </div>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
          <div><label for="semester-rapor" class="block text-sm font-medium text-gray-700 mb-1">Semester</label> <select id="semester-rapor" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"> <option value="">-- Pilih Semester --</option> <option value="1">Semester 1</option> <option value="2">Semester 2</option> </select>
          </div>
          <div><label for="tahun-ajaran-rapor" class="block text-sm font-medium text-gray-700 mb-1">Tahun Ajaran</label> <select id="tahun-ajaran-rapor" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"> <option value="">-- Pilih Tahun Ajaran --</option> </select>
          </div>
-        </div><button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700"> <i class="fas fa-eye mr-2"></i>Tampilkan Rapor </button>
+        </div><button type="submit" class="w-full sm:w-auto bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700"> <i class="fas fa-eye mr-2"></i>Tampilkan Rapor </button>
        </form>
        <div id="preview-rapor-semester" class="hidden">
-        <div class="flex justify-end mb-4"><button onclick="window.cetakRaporSemester()" class="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700"> <i class="fas fa-print mr-2"></i>Cetak PDF </button>
+        <div class="flex justify-end mb-4"><button onclick="window.cetakRaporSemester()" class="bg-green-600 text-white px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base font-medium hover:bg-green-700"> <i class="fas fa-print mr-2"></i>Cetak PDF </button>
         </div>
-        <div id="content-rapor-semester" class="bg-white border border-gray-300 rounded-lg p-8"></div>
+        <div class="table-responsive">
+         <div id="content-rapor-semester" class="bg-white border border-gray-300 rounded-lg p-4 sm:p-6 md:p-8"></div>
+        </div>
        </div>
       </div>
      </div>
@@ -465,7 +514,7 @@
      </div>
     </div>
    </div><!-- Footer -->
-   <footer class="bg-white text-gray-800 py-4 text-center">
+   <footer class="bg-white text-gray-800 py-4 text-center shadow-lg border-t border-gray-300">
     <p class="text-sm">© <span id="current-year"></span> Sistem Monitoring Hafalan Santri</p>
     <p class="text-xs mt-1">Created by <span class="font-bold">Muzanni</span></p>
    </footer>
@@ -1775,7 +1824,7 @@
             </div>
             <div class="mt-3 pt-3 border-t border-gray-400">
               <p class="text-center text-sm text-gray-700">
-                <span class="font-bold text-gray-800">Tambahan periode ini: ${laporanData.hafalan.totalHalaman} halaman Al-Qur'an, ${laporanData.hadits.totalHadits} hadits</span>
+                <span class="font-bold text-gray-800">Tambahan periode ini: ${laporanData.hafalan.totalHalaman} halaman Al-Qur'an (${laporanData.hafalan.jumlah}x input), ${laporanData.hadits.totalHadits} hadits (${laporanData.hadits.jumlah}x input)</span>
               </p>
             </div>
           </div>
@@ -1867,7 +1916,7 @@
           
           <div class="mb-6 p-4 bg-gray-50 rounded-lg">
             <h3 class="font-bold text-gray-800 mb-2">Catatan Pembimbing:</h3>
-            <p class="text-sm text-gray-700 text-justify">${generateCatatanPekanan(laporanData)}</p>
+            <p class="text-sm text-gray-700">${generateCatatanPekanan(laporanData)}</p>
           </div>
           
           <div class="mt-8 flex justify-between text-sm">
@@ -2147,7 +2196,7 @@
           
           <div class="mb-6 p-4 bg-gray-50 rounded-lg">
             <h3 class="font-bold text-gray-800 mb-2">Catatan Pembimbing:</h3>
-            <p class="text-sm text-gray-700 text-justify">${generateCatatanBulanan(laporanData)}</p>
+            <p class="text-sm text-gray-700">${generateCatatanBulanan(laporanData)}</p>
           </div>
           
           <div class="mt-8 flex justify-between text-sm">
@@ -2507,12 +2556,12 @@
           
           <div class="mb-6 p-4 bg-gray-50 rounded-lg border-l-4 border-gray-800">
             <h3 class="font-bold text-gray-800 mb-2">Catatan Pembimbing:</h3>
-            <p class="text-sm text-gray-700 leading-relaxed text-justify">${generateCatatanRapor(laporanData)}</p>
+            <p class="text-sm text-gray-700 leading-relaxed">${generateCatatanRapor(laporanData)}</p>
           </div>
           
           <div class="mt-8 grid grid-cols-3 gap-8 text-sm">
             <div class="text-center">
-              <p class="mb-16">Mengetahui,<br>Mudir Ma'had</p>
+              <p class="mb-16">Mengetahui,<br>Kepala Ma'had</p>
               <p class="border-t border-gray-800 pt-1 inline-block px-8">Marhali Abd. Rahman, S.Pd.I., M.Pd.</p>
             </div>
             <div class="text-center">
@@ -2684,5 +2733,5 @@
     // Initialize app
     init();
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9b9213f7920dbc78',t:'MTc2NzYwNjY5Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9b92460ce3fa40f1',t:'MTc2NzYwODc0Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
