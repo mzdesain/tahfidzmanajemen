@@ -248,9 +248,9 @@
         <div><label for="santri-hafalan" class="block text-sm font-medium text-gray-700 mb-1">Nama Santri</label> <select id="santri-hafalan" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"> <option value="">-- Pilih Santri --</option> </select>
         </div>
         <div class="grid grid-cols-2 gap-4">
-         <div><label for="juz-hafalan" class="block text-sm font-medium text-gray-700 mb-1">Juz</label> <input type="text" id="juz-hafalan" min="1" max="30" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+         <div><label for="juz-hafalan" class="block text-sm font-medium text-gray-700 mb-1">Juz</label> <input type="number" id="juz-hafalan" min="1" max="30" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
          </div>
-         <div><label for="halaman-hafalan" class="block text-sm font-medium text-gray-700 mb-1">Halaman</label> <input type="text" id="halaman-hafalan" min="1" max="604" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+         <div><label for="halaman-hafalan" class="block text-sm font-medium text-gray-700 mb-1">Halaman</label> <input type="number" id="halaman-hafalan" min="1" max="604" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
          </div>
         </div>
         <div><label for="nilai-hafalan" class="block text-sm font-medium text-gray-700 mb-1">Nilai</label> <select id="nilai-hafalan" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"> <option value="">-- Pilih Nilai --</option> <option value="A">A - Mumtaz</option> <option value="B">B - Jayyid Jiddan</option> <option value="C">C - Jayyid</option> <option value="D">D - Maqbul</option> </select>
@@ -278,9 +278,9 @@
         <div><label for="santri-murajaah" class="block text-sm font-medium text-gray-700 mb-1">Nama Santri</label> <select id="santri-murajaah" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"> <option value="">-- Pilih Santri --</option> </select>
         </div>
         <div class="grid grid-cols-2 gap-4">
-         <div><label for="juz-murajaah" class="block text-sm font-medium text-gray-700 mb-1">Juz</label> <input type="text" id="juz-murajaah" min="1" max="30" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+         <div><label for="juz-murajaah" class="block text-sm font-medium text-gray-700 mb-1">Juz</label> <input type="number" id="juz-murajaah" min="1" max="30" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
          </div>
-         <div><label for="halaman-murajaah" class="block text-sm font-medium text-gray-700 mb-1">Halaman</label> <input type="text" id="halaman-murajaah" min="1" max="604" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+         <div><label for="halaman-murajaah" class="block text-sm font-medium text-gray-700 mb-1">Halaman</label> <input type="number" id="halaman-murajaah" min="1" max="604" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
          </div>
         </div>
         <div><label for="nilai-murajaah" class="block text-sm font-medium text-gray-700 mb-1">Nilai</label> <select id="nilai-murajaah" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"> <option value="">-- Pilih Nilai --</option> <option value="A">A - Mumtaz</option> <option value="B">B - Jayyid Jiddan</option> <option value="C">C - Jayyid</option> <option value="D">D - Maqbul</option> </select>
@@ -294,7 +294,7 @@
         </div>
         <div><label for="santri-hadits" class="block text-sm font-medium text-gray-700 mb-1">Nama Santri</label> <select id="santri-hadits" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"> <option value="">-- Pilih Santri --</option> </select>
         </div>
-        <div><label for="hadits-ke" class="block text-sm font-medium text-gray-700 mb-1">Hadits Ke-</label> <input type="text" id="hadits-ke" min="1" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+        <div><label for="hadits-ke" class="block text-sm font-medium text-gray-700 mb-1">Hadits Ke-</label> <input type="number" id="hadits-ke" min="1" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
         </div>
         <div><label for="nilai-hadits" class="block text-sm font-medium text-gray-700 mb-1">Nilai</label> <select id="nilai-hadits" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"> <option value="">-- Pilih Nilai --</option> <option value="A">A - Mumtaz</option> <option value="B">B - Jayyid Jiddan</option> <option value="C">C - Jayyid</option> <option value="D">D - Maqbul</option> </select>
         </div><button type="submit" id="btn-submit-hadits" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700"> <i class="fas fa-save mr-2"></i>Simpan Hadits </button>
@@ -335,7 +335,6 @@
         <div><label for="santri-tasmi" class="block text-sm font-medium text-gray-700 mb-1">Nama Santri</label> <select id="santri-tasmi" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"> <option value="">-- Pilih Santri --</option> </select>
         </div>
         <div><label for="juz-tasmi" class="block text-sm font-medium text-gray-700 mb-1">Juz yang Ditasmi'</label> <input type="text" id="juz-tasmi" placeholder="Contoh: 1, 2-3, atau 1 s/d 5" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-         <p class="text-xs text-gray-500 mt-1">Bisa input angka tunggal (1) atau rentang (1-3, 1 s/d 5)</p>
         </div>
         <div><label for="nilai-tasmi" class="block text-sm font-medium text-gray-700 mb-1">Nilai</label> <select id="nilai-tasmi" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"> <option value="">-- Pilih Nilai --</option> <option value="A">A - Mumtaz</option> <option value="B">B - Jayyid Jiddan</option> <option value="C">C - Jayyid</option> <option value="D">D - Maqbul</option> </select>
         </div><button type="submit" id="btn-submit-tasmi" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700"> <i class="fas fa-save mr-2"></i>Simpan Tasmi' </button>
