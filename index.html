@@ -109,7 +109,7 @@
  </head>
  <body class="h-full">
   <div id="app" class="h-full w-full overflow-auto" style="background: #FFFFFF;"><!-- Top Navigation -->
-   <nav class="bg-white sticky top-0 z-50 border-b-2 border-gray-200">
+   <nav class="bg-white sticky top-0 z-50 border-b-2 border-gray-300">
     <div class="px-4 py-3">
      <div class="flex items-center justify-between mb-3">
       <div class="flex items-center space-x-3"><img src="https://ypwi.or.id/assets/setting/front/meta/image.png" alt="Logo Pondok" class="w-14 h-14 object-contain">
@@ -178,10 +178,11 @@
        <div class="flex-shrink-0"><i class="fas fa-info-circle text-3xl text-indigo-600"></i>
        </div>
        <div class="ml-4">
-        <h3 class="text-lg font-bold text-gray-800 mb-2 text-justify">Selamat Datang di Sistem Monitoring Hafalan Santri</h3>
-        <p class="text-gray-700 text-sm mb-2 leading-relaxed text-justify">Sistem ini membantu Muhaffizh dan Muhaffizhah untuk mengelola dan memantau perkembangan hafalan santri secara terstruktur dan profesional.</p>
-        <p class="text-sm text-gray-600 bg-white bg-opacity-60 rounded-lg p-3 mt-3 text-justify"> <strong>Tips 1:</strong> Mulai dengan menambahkan data pembimbing di menu <span class="font-semibold text-indigo-700">Kelola Pembimbing</span>, kemudian masuk ke <span class="font-semibold text-indigo-700">Menu Pembimbing</span> untuk mengelola santri dan input data hafalan.</p>
-        <p class="text-sm text-gray-600 bg-white bg-opacity-60 rounded-lg p-3 mt-3 text-justify"> <strong>Tips 2:</strong> Untuk penginputan data harian <span class="font-semibold text-indigo-700">bisa pakai HP atau laptop.</span> Adapun untuk download laporan dan rapor <span class="font-semibold text-indigo-700">disarankan pakai LAPTOP</span> agar hasil downloadnya rapi.</p>
+        <h3 class="text-lg font-bold text-gray-800 mb-2 text-justify">Selamat Datang di Sistem Monitpring Hafalan Santri</h3>
+        <p class="text-gray-700 text-sm mb-2 leading-relaxed">Sistem ini membantu Anda mengelola dan memantau perkembangan hafalan santri secara terstruktur dan profesional.</p>
+        <p class="text-sm text-gray-600 bg-white bg-opacity-60 rounded-lg p-3 mt-3 text-justify"><strong>Tips 1:</strong> Mulai dengan menambahkan data pembimbing di menu <span class="font-semibold text-indigo-700">Kelola Pembimbing</span>, kemudian masuk ke <span class="font-semibold text-indigo-700">Menu Pembimbing</span> untuk mengelola santri dan input data hafalan.</p>
+        <p class="text-sm text-gray-600 bg-white bg-opacity-60 rounded-lg p-3 mt-3 text-justify"><strong>Tips 2:</strong> Untuk penginputan data harian <span class="font-semibold text-indigo-700">bisa pakai HP atau laptop.</span> Adapun untuk download laporan pekanan, bulanan dan rapor semester, <span class="font-semibold text-indigo-700">disarankan untuk menggunakan LAPTOP</span> agar hasil downloadnya rapi.</p>
+       </div>
        </div>
       </div>
      </div>
@@ -247,11 +248,24 @@
         </div>
         <div><label for="santri-hafalan" class="block text-sm font-medium text-gray-700 mb-1">Nama Santri</label> <select id="santri-hafalan" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"> <option value="">-- Pilih Santri --</option> </select>
         </div>
+        <div class="bg-blue-50 border border-blue-300 rounded-lg p-3 mb-2">
+         <p class="text-sm text-blue-800 font-medium mb-1">Range Hafalan (Dari - Sampai)</p>
+         <p class="text-xs text-blue-700">Contoh: Juz 30 Hal 582 sampai Juz 30 Hal 584 = 3 halaman</p>
+        </div>
         <div class="grid grid-cols-2 gap-4">
-         <div><label for="juz-hafalan" class="block text-sm font-medium text-gray-700 mb-1">Juz</label> <input type="number" id="juz-hafalan" min="1" max="30" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+         <div><label for="juz-hafalan-dari" class="block text-sm font-medium text-gray-700 mb-1">Juz Dari</label> <input type="number" id="juz-hafalan-dari" min="1" max="30" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
          </div>
-         <div><label for="halaman-hafalan" class="block text-sm font-medium text-gray-700 mb-1">Halaman</label> <input type="number" id="halaman-hafalan" min="1" max="604" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+         <div><label for="halaman-hafalan-dari" class="block text-sm font-medium text-gray-700 mb-1">Halaman Dari</label> <input type="number" id="halaman-hafalan-dari" min="1" max="604" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+         <div><label for="juz-hafalan-sampai" class="block text-sm font-medium text-gray-700 mb-1">Juz Sampai</label> <input type="number" id="juz-hafalan-sampai" min="1" max="30" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+         </div>
+         <div><label for="halaman-hafalan-sampai" class="block text-sm font-medium text-gray-700 mb-1">Halaman Sampai</label> <input type="number" id="halaman-hafalan-sampai" min="1" max="604" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+         </div>
+        </div>
+        <div id="info-jumlah-hafalan" class="bg-green-50 border border-green-300 rounded-lg p-3 hidden">
+         <p class="text-sm font-medium text-green-800"><i class="fas fa-check-circle mr-1"></i> Jumlah halaman: <span id="total-halaman-hafalan" class="font-bold">0</span> halaman</p>
         </div>
         <div><label for="nilai-hafalan" class="block text-sm font-medium text-gray-700 mb-1">Nilai</label> <select id="nilai-hafalan" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"> <option value="">-- Pilih Nilai --</option> <option value="A">A - Mumtaz</option> <option value="B">B - Jayyid Jiddan</option> <option value="C">C - Jayyid</option> <option value="D">D - Maqbul</option> </select>
         </div><button type="submit" id="btn-submit-hafalan" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700"> <i class="fas fa-save mr-2"></i>Simpan Hafalan </button>
@@ -277,11 +291,24 @@
         </div>
         <div><label for="santri-murajaah" class="block text-sm font-medium text-gray-700 mb-1">Nama Santri</label> <select id="santri-murajaah" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"> <option value="">-- Pilih Santri --</option> </select>
         </div>
+        <div class="bg-blue-50 border border-blue-300 rounded-lg p-3 mb-2">
+         <p class="text-sm text-blue-800 font-medium mb-1">Range Murajaah (Dari - Sampai)</p>
+         <p class="text-xs text-blue-700">Contoh: Juz 1 Hal 2 sampai Juz 3 Hal 61 = 60 halaman</p>
+        </div>
         <div class="grid grid-cols-2 gap-4">
-         <div><label for="juz-murajaah" class="block text-sm font-medium text-gray-700 mb-1">Juz</label> <input type="number" id="juz-murajaah" min="1" max="30" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+         <div><label for="juz-murajaah-dari" class="block text-sm font-medium text-gray-700 mb-1">Juz Dari</label> <input type="number" id="juz-murajaah-dari" min="1" max="30" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
          </div>
-         <div><label for="halaman-murajaah" class="block text-sm font-medium text-gray-700 mb-1">Halaman</label> <input type="number" id="halaman-murajaah" min="1" max="604" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+         <div><label for="halaman-murajaah-dari" class="block text-sm font-medium text-gray-700 mb-1">Halaman Dari</label> <input type="number" id="halaman-murajaah-dari" min="1" max="604" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+         <div><label for="juz-murajaah-sampai" class="block text-sm font-medium text-gray-700 mb-1">Juz Sampai</label> <input type="number" id="juz-murajaah-sampai" min="1" max="30" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+         </div>
+         <div><label for="halaman-murajaah-sampai" class="block text-sm font-medium text-gray-700 mb-1">Halaman Sampai</label> <input type="number" id="halaman-murajaah-sampai" min="1" max="604" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+         </div>
+        </div>
+        <div id="info-jumlah-murajaah" class="bg-green-50 border border-green-300 rounded-lg p-3 hidden">
+         <p class="text-sm font-medium text-green-800"><i class="fas fa-check-circle mr-1"></i> Jumlah halaman: <span id="total-halaman-murajaah" class="font-bold">0</span> halaman</p>
         </div>
         <div><label for="nilai-murajaah" class="block text-sm font-medium text-gray-700 mb-1">Nilai</label> <select id="nilai-murajaah" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"> <option value="">-- Pilih Nilai --</option> <option value="A">A - Mumtaz</option> <option value="B">B - Jayyid Jiddan</option> <option value="C">C - Jayyid</option> <option value="D">D - Maqbul</option> </select>
         </div><button type="submit" id="btn-submit-murajaah" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700"> <i class="fas fa-save mr-2"></i>Simpan Murajaah </button>
@@ -294,7 +321,18 @@
         </div>
         <div><label for="santri-hadits" class="block text-sm font-medium text-gray-700 mb-1">Nama Santri</label> <select id="santri-hadits" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"> <option value="">-- Pilih Santri --</option> </select>
         </div>
-        <div><label for="hadits-ke" class="block text-sm font-medium text-gray-700 mb-1">Hadits Ke-</label> <input type="number" id="hadits-ke" min="1" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+        <div class="bg-blue-50 border border-blue-300 rounded-lg p-3 mb-2">
+         <p class="text-sm text-blue-800 font-medium mb-1">Range Hadits (Dari - Sampai)</p>
+         <p class="text-xs text-blue-700">Contoh: Hadits 1 sampai Hadits 5 = 5 hadits</p>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+         <div><label for="hadits-dari" class="block text-sm font-medium text-gray-700 mb-1">Hadits Dari</label> <input type="number" id="hadits-dari" min="1" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+         </div>
+         <div><label for="hadits-sampai" class="block text-sm font-medium text-gray-700 mb-1">Hadits Sampai</label> <input type="number" id="hadits-sampai" min="1" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+         </div>
+        </div>
+        <div id="info-jumlah-hadits" class="bg-green-50 border border-green-300 rounded-lg p-3 hidden">
+         <p class="text-sm font-medium text-green-800"><i class="fas fa-check-circle mr-1"></i> Jumlah hadits: <span id="total-hadits-input" class="font-bold">0</span> hadits</p>
         </div>
         <div><label for="nilai-hadits" class="block text-sm font-medium text-gray-700 mb-1">Nilai</label> <select id="nilai-hadits" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"> <option value="">-- Pilih Nilai --</option> <option value="A">A - Mumtaz</option> <option value="B">B - Jayyid Jiddan</option> <option value="C">C - Jayyid</option> <option value="D">D - Maqbul</option> </select>
         </div><button type="submit" id="btn-submit-hadits" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700"> <i class="fas fa-save mr-2"></i>Simpan Hadits </button>
@@ -309,7 +347,7 @@
         </div>
         <div class="space-y-2">
          <p class="font-medium text-gray-700">Aktivitas Harian:</p>
-         <div class="grid grid-cols-2 gap-3"><label class="flex items-center space-x-2"> <input type="checkbox" id="check-subuh" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Shalat Subuh</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-zhuhur" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Zhuhur</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-ashar" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Ashar</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-maghrib" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Maghrib</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-isya" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Isya</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-dhuha" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Dhuha</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-qiyam" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Qiyamul Lail</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-rawatib" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Rawatib</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-dzikir" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Dzikir Pagi-Petang</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-puasa" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Puasa Sunnah</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-hafalan-hadits" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Hafalan Hadits</span> </label>
+         <div class="grid grid-cols-2 gap-3"><label class="flex items-center space-x-2"> <input type="checkbox" id="check-subuh" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Shalat Subuh</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-zhuhur" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Shalat Zhuhur</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-ashar" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Shalat Ashar</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-maghrib" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Shalat Maghrib</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-isya" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Shalat Isya</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-dhuha" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Dhuha</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-qiyam" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Qiyamul Lail</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-rawatib" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Rawatib</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-dzikir" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Dzikir Pagi-Petang</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-puasa" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Puasa Sunnah</span> </label> <label class="flex items-center space-x-2"> <input type="checkbox" id="check-hafalan-hadits" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"> <span class="text-sm text-gray-700">Hafalan Hadits</span> </label>
          </div>
         </div>
         <div class="bg-indigo-50 p-3 rounded-lg">
@@ -334,7 +372,18 @@
         </div>
         <div><label for="santri-tasmi" class="block text-sm font-medium text-gray-700 mb-1">Nama Santri</label> <select id="santri-tasmi" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"> <option value="">-- Pilih Santri --</option> </select>
         </div>
-        <div><label for="juz-tasmi" class="block text-sm font-medium text-gray-700 mb-1">Juz yang Ditasmi'</label> <input type="text" id="juz-tasmi" placeholder="Contoh: 1, 2-3, atau 1 s/d 5" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+        <div class="bg-blue-50 border border-blue-300 rounded-lg p-3 mb-2">
+         <p class="text-sm text-blue-800 font-medium mb-1">🎧 Range Tasmi' (Dari - Sampai)</p>
+         <p class="text-xs text-blue-700">Contoh: Juz 1 sampai Juz 5 = Tasmi' 5 Juz</p>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+         <div><label for="juz-tasmi-dari" class="block text-sm font-medium text-gray-700 mb-1">Juz Dari</label> <input type="number" id="juz-tasmi-dari" min="1" max="30" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+         </div>
+         <div><label for="juz-tasmi-sampai" class="block text-sm font-medium text-gray-700 mb-1">Juz Sampai</label> <input type="number" id="juz-tasmi-sampai" min="1" max="30" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+         </div>
+        </div>
+        <div id="info-jumlah-tasmi" class="bg-green-50 border border-green-300 rounded-lg p-3 hidden">
+         <p class="text-sm font-medium text-green-800"><i class="fas fa-check-circle mr-1"></i> Tasmi' <span id="total-juz-tasmi" class="font-bold">0</span> Juz</p>
         </div>
         <div><label for="nilai-tasmi" class="block text-sm font-medium text-gray-700 mb-1">Nilai</label> <select id="nilai-tasmi" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"> <option value="">-- Pilih Nilai --</option> <option value="A">A - Mumtaz</option> <option value="B">B - Jayyid Jiddan</option> <option value="C">C - Jayyid</option> <option value="D">D - Maqbul</option> </select>
         </div><button type="submit" id="btn-submit-tasmi" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700"> <i class="fas fa-save mr-2"></i>Simpan Tasmi' </button>
@@ -500,6 +549,83 @@
       
       const tahunLaporan = document.getElementById('tahun-laporan');
       if (tahunLaporan) tahunLaporan.value = new Date().getFullYear();
+      
+      // Add event listeners for automatic calculation
+      // Hafalan range calculation
+      ['juz-hafalan-dari', 'halaman-hafalan-dari', 'juz-hafalan-sampai', 'halaman-hafalan-sampai'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('input', () => {
+            const juzDari = parseInt(document.getElementById('juz-hafalan-dari').value) || 0;
+            const halDari = parseInt(document.getElementById('halaman-hafalan-dari').value) || 0;
+            const juzSampai = parseInt(document.getElementById('juz-hafalan-sampai').value) || 0;
+            const halSampai = parseInt(document.getElementById('halaman-hafalan-sampai').value) || 0;
+            
+            if (juzDari && halDari && juzSampai && halSampai) {
+              const totalHalaman = (halSampai - halDari) + 1;
+              if (totalHalaman > 0) {
+                document.getElementById('total-halaman-hafalan').textContent = totalHalaman;
+                document.getElementById('info-jumlah-hafalan').classList.remove('hidden');
+              }
+            }
+          });
+        }
+      });
+      
+      // Murajaah range calculation
+      ['juz-murajaah-dari', 'halaman-murajaah-dari', 'juz-murajaah-sampai', 'halaman-murajaah-sampai'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('input', () => {
+            const juzDari = parseInt(document.getElementById('juz-murajaah-dari').value) || 0;
+            const halDari = parseInt(document.getElementById('halaman-murajaah-dari').value) || 0;
+            const juzSampai = parseInt(document.getElementById('juz-murajaah-sampai').value) || 0;
+            const halSampai = parseInt(document.getElementById('halaman-murajaah-sampai').value) || 0;
+            
+            if (juzDari && halDari && juzSampai && halSampai) {
+              const totalHalaman = (halSampai - halDari) + 1;
+              if (totalHalaman > 0) {
+                document.getElementById('total-halaman-murajaah').textContent = totalHalaman;
+                document.getElementById('info-jumlah-murajaah').classList.remove('hidden');
+              }
+            }
+          });
+        }
+      });
+      
+      // Hadits range calculation
+      ['hadits-dari', 'hadits-sampai'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('input', () => {
+            const haditsDari = parseInt(document.getElementById('hadits-dari').value) || 0;
+            const haditsSampai = parseInt(document.getElementById('hadits-sampai').value) || 0;
+            
+            if (haditsDari && haditsSampai && haditsSampai >= haditsDari) {
+              const totalHadits = (haditsSampai - haditsDari) + 1;
+              document.getElementById('total-hadits-input').textContent = totalHadits;
+              document.getElementById('info-jumlah-hadits').classList.remove('hidden');
+            }
+          });
+        }
+      });
+      
+      // Tasmi range calculation
+      ['juz-tasmi-dari', 'juz-tasmi-sampai'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('input', () => {
+            const juzDari = parseInt(document.getElementById('juz-tasmi-dari').value) || 0;
+            const juzSampai = parseInt(document.getElementById('juz-tasmi-sampai').value) || 0;
+            
+            if (juzDari && juzSampai && juzSampai >= juzDari) {
+              const totalJuz = (juzSampai - juzDari) + 1;
+              document.getElementById('total-juz-tasmi').textContent = totalJuz;
+              document.getElementById('info-jumlah-tasmi').classList.remove('hidden');
+            }
+          });
+        }
+      });
     }
 
     function showToast(message, type = 'success') {
@@ -890,25 +1016,42 @@
       
       try {
         const idSantri = document.getElementById('santri-hafalan').value;
+        const juzDari = parseInt(document.getElementById('juz-hafalan-dari').value);
+        const halDari = parseInt(document.getElementById('halaman-hafalan-dari').value);
+        const juzSampai = parseInt(document.getElementById('juz-hafalan-sampai').value);
+        const halSampai = parseInt(document.getElementById('halaman-hafalan-sampai').value);
         
-        // Simpan hafalan baru
+        // Hitung jumlah halaman
+        const jumlahHalaman = (halSampai - halDari) + 1;
+        
+        if (jumlahHalaman <= 0) {
+          showToast('Range halaman tidak valid', 'error');
+          btn.classList.remove('btn-loading');
+          btn.disabled = false;
+          return;
+        }
+        
+        // Simpan hafalan baru dengan range
         await window.firestore.addDoc(window.firestore.collection(window.db, 'hafalan_baru'), {
           id_pembimbing: currentPembimbingId,
           id_santri: idSantri,
           tanggal: document.getElementById('tanggal-hafalan').value,
-          juz: parseInt(document.getElementById('juz-hafalan').value),
-          halaman: parseInt(document.getElementById('halaman-hafalan').value),
+          juz_dari: juzDari,
+          halaman_dari: halDari,
+          juz_sampai: juzSampai,
+          halaman_sampai: halSampai,
+          jumlah_halaman: jumlahHalaman,
           nilai: document.getElementById('nilai-hafalan').value
         });
         
-        // Update total hafalan santri (tambah 1 halaman)
+        // Update total hafalan santri (tambah jumlah halaman yang diinput)
         const santri = santriData.find(s => s.id === idSantri);
         if (santri) {
           let totalJuz = santri.total_hafalan_juz || 0;
           let totalHalaman = santri.total_hafalan_halaman || 0;
           
-          // Tambah 1 halaman
-          totalHalaman += 1;
+          // Tambah jumlah halaman
+          totalHalaman += jumlahHalaman;
           
           // Jika halaman mencapai 20 (1 juz = 20 halaman), tambah juz dan reset halaman
           if (totalHalaman >= 20) {
@@ -927,8 +1070,9 @@
           await loadAllData();
         }
         
-        showToast('Hafalan berhasil disimpan dan total hafalan diperbarui');
+        showToast(`Hafalan berhasil disimpan (${jumlahHalaman} halaman) dan total hafalan diperbarui`);
         e.target.reset();
+        document.getElementById('info-jumlah-hafalan').classList.add('hidden');
         setTodayDates();
       } catch (error) {
         showToast('Gagal menyimpan hafalan', 'error');
@@ -973,17 +1117,36 @@
       btn.disabled = true;
       
       try {
+        const juzDari = parseInt(document.getElementById('juz-murajaah-dari').value);
+        const halDari = parseInt(document.getElementById('halaman-murajaah-dari').value);
+        const juzSampai = parseInt(document.getElementById('juz-murajaah-sampai').value);
+        const halSampai = parseInt(document.getElementById('halaman-murajaah-sampai').value);
+        
+        // Hitung jumlah halaman
+        const jumlahHalaman = (halSampai - halDari) + 1;
+        
+        if (jumlahHalaman <= 0) {
+          showToast('Range halaman tidak valid', 'error');
+          btn.classList.remove('btn-loading');
+          btn.disabled = false;
+          return;
+        }
+        
         await window.firestore.addDoc(window.firestore.collection(window.db, 'murajaah'), {
           id_pembimbing: currentPembimbingId,
           id_santri: document.getElementById('santri-murajaah').value,
           tanggal: document.getElementById('tanggal-murajaah').value,
-          juz: parseInt(document.getElementById('juz-murajaah').value),
-          halaman: parseInt(document.getElementById('halaman-murajaah').value),
+          juz_dari: juzDari,
+          halaman_dari: halDari,
+          juz_sampai: juzSampai,
+          halaman_sampai: halSampai,
+          jumlah_halaman: jumlahHalaman,
           nilai: document.getElementById('nilai-murajaah').value
         });
         
-        showToast('Murajaah berhasil disimpan');
+        showToast(`Murajaah berhasil disimpan (${jumlahHalaman} halaman)`);
         e.target.reset();
+        document.getElementById('info-jumlah-murajaah').classList.add('hidden');
         setTodayDates();
       } catch (error) {
         showToast('Gagal menyimpan murajaah', 'error');
@@ -1002,20 +1165,34 @@
       
       try {
         const idSantri = document.getElementById('santri-hadits').value;
+        const haditsDari = parseInt(document.getElementById('hadits-dari').value);
+        const haditsSampai = parseInt(document.getElementById('hadits-sampai').value);
         
-        // Simpan data hadits
+        // Hitung jumlah hadits
+        const jumlahHadits = (haditsSampai - haditsDari) + 1;
+        
+        if (jumlahHadits <= 0) {
+          showToast('Range hadits tidak valid', 'error');
+          btn.classList.remove('btn-loading');
+          btn.disabled = false;
+          return;
+        }
+        
+        // Simpan data hadits dengan range
         await window.firestore.addDoc(window.firestore.collection(window.db, 'hadits'), {
           id_pembimbing: currentPembimbingId,
           id_santri: idSantri,
           tanggal: document.getElementById('tanggal-hadits').value,
-          hadits_ke: parseInt(document.getElementById('hadits-ke').value),
+          hadits_dari: haditsDari,
+          hadits_sampai: haditsSampai,
+          jumlah_hadits: jumlahHadits,
           nilai: document.getElementById('nilai-hadits').value
         });
         
-        // Update total hadits santri (tambah 1)
+        // Update total hadits santri (tambah jumlah hadits yang diinput)
         const santri = santriData.find(s => s.id === idSantri);
         if (santri) {
-          let totalHadits = (santri.total_hadits || 0) + 1;
+          let totalHadits = (santri.total_hadits || 0) + jumlahHadits;
           
           // Update di Firestore
           const santriRef = window.firestore.doc(window.db, 'santri', idSantri);
@@ -1027,8 +1204,9 @@
           await loadAllData();
         }
         
-        showToast('Hadits berhasil disimpan dan total hadits diperbarui');
+        showToast(`Hadits berhasil disimpan (${jumlahHadits} hadits) dan total hadits diperbarui`);
         e.target.reset();
+        document.getElementById('info-jumlah-hadits').classList.add('hidden');
         setTodayDates();
       } catch (error) {
         showToast('Gagal menyimpan hadits', 'error');
@@ -1169,16 +1347,32 @@
       btn.disabled = true;
       
       try {
+        const juzDari = parseInt(document.getElementById('juz-tasmi-dari').value);
+        const juzSampai = parseInt(document.getElementById('juz-tasmi-sampai').value);
+        
+        // Hitung jumlah juz
+        const jumlahJuz = (juzSampai - juzDari) + 1;
+        
+        if (jumlahJuz <= 0) {
+          showToast('Range juz tidak valid', 'error');
+          btn.classList.remove('btn-loading');
+          btn.disabled = false;
+          return;
+        }
+        
         await window.firestore.addDoc(window.firestore.collection(window.db, 'tasmi'), {
           id_pembimbing: currentPembimbingId,
           id_santri: document.getElementById('santri-tasmi').value,
           tanggal: document.getElementById('tanggal-tasmi').value,
-          juz_tasmi: document.getElementById('juz-tasmi').value,
+          juz_dari: juzDari,
+          juz_sampai: juzSampai,
+          jumlah_juz: jumlahJuz,
           nilai: document.getElementById('nilai-tasmi').value
         });
         
-        showToast("Tasmi' berhasil disimpan");
+        showToast(`Tasmi' berhasil disimpan (${jumlahJuz} Juz)`);
         e.target.reset();
+        document.getElementById('info-jumlah-tasmi').classList.add('hidden');
         setTodayDates();
       } catch (error) {
         showToast("Gagal menyimpan tasmi'", 'error');
@@ -1419,6 +1613,10 @@
       }
       
       try {
+        // Reload santri data untuk mendapatkan data terkini
+        const santriSnapshot = await window.firestore.getDocs(window.firestore.collection(window.db, 'santri'));
+        const santriDataTerkini = santriSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
         // Load all data
         const hafalanSnap = await window.firestore.getDocs(window.firestore.collection(window.db, 'hafalan_baru'));
         const hafalanData = hafalanSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -1450,30 +1648,34 @@
         const tasmiFiltered = filterDataByDateRange(tasmiData, tanggalMulai, tanggalSelesai, santriId);
         const absensiFiltered = filterDataByDateRange(absensiData, tanggalMulai, tanggalSelesai, santriId);
         
-        // Calculate statistics
-        const santri = santriData.find(s => s.id === santriId);
+        // Calculate statistics - gunakan data terkini
+        const santri = santriDataTerkini.find(s => s.id === santriId);
         const pembimbing = pembimbingData.find(p => p.id === currentPembimbingId);
         
-        // Hitung hafalan awal (dari form kelola santri)
-        const hafalanAwalJuz = santri.total_hafalan_juz || 0;
-        const hafalanAwalHalaman = santri.total_hafalan_halaman || 0;
-        const haditsAwal = santri.total_hadits || 0;
+        // Hitung hafalan di AWAL periode (sebelum input periode ini)
+        const tambahanHalamanPeriode = hafalanFiltered.reduce((sum, h) => sum + (h.jumlah_halaman || 0), 0);
+        const tambahanHaditsPeriode = haditsFiltered.reduce((sum, h) => sum + (h.jumlah_hadits || 0), 0);
         
-        // Hitung tambahan hafalan dari input periode ini (jumlah input = jumlah halaman)
-        const tambahanHalamanPeriode = hafalanFiltered.length;
-        const tambahanHaditsPeriode = haditsFiltered.length;
+        // Total hafalan SAAT INI dari database santri (sudah ter-update)
+        const totalJuz = santri.total_hafalan_juz || 0;
+        const totalHalaman = santri.total_hafalan_halaman || 0;
+        const totalHadits = santri.total_hadits || 0;
         
-        // Total hafalan = hafalan awal + tambahan periode
-        let totalJuz = hafalanAwalJuz;
-        let totalHalaman = hafalanAwalHalaman + tambahanHalamanPeriode;
+        // Hitung hafalan awal periode = total sekarang - tambahan periode
+        let hafalanAwalJuz = totalJuz;
+        let hafalanAwalHalaman = totalHalaman - tambahanHalamanPeriode;
         
-        // Konversi halaman ke juz jika >= 20 halaman
-        if (totalHalaman >= 20) {
-          totalJuz += Math.floor(totalHalaman / 20);
-          totalHalaman = totalHalaman % 20;
+        // Jika hafalanAwalHalaman negatif, kurangi juz
+        while (hafalanAwalHalaman < 0) {
+          hafalanAwalJuz -= 1;
+          hafalanAwalHalaman += 20;
         }
         
-        const totalHadits = haditsAwal + tambahanHaditsPeriode;
+        const haditsAwal = totalHadits - tambahanHaditsPeriode;
+        
+        // Hitung jumlah input dan total juz tasmi
+        const jumlahInputTasmi = tasmiFiltered.length;
+        const totalJuzTasmi = tasmiFiltered.reduce((sum, t) => sum + (t.jumlah_juz || 0), 0);
         
         const laporanData = {
           santri: santri,
@@ -1483,17 +1685,18 @@
             selesai: new Date(tanggalSelesai).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
           },
           hafalanAwal: {
-            juz: hafalanAwalJuz,
-            halaman: hafalanAwalHalaman
+            juz: hafalanAwalJuz >= 0 ? hafalanAwalJuz : 0,
+            halaman: hafalanAwalHalaman >= 0 ? hafalanAwalHalaman : 0
           },
           hafalanTotal: {
             juz: totalJuz,
             halaman: totalHalaman
           },
-          haditsAwal: haditsAwal,
+          haditsAwal: haditsAwal >= 0 ? haditsAwal : 0,
           haditsTotal: totalHadits,
           hafalan: {
             jumlah: hafalanFiltered.length,
+            totalHalaman: tambahanHalamanPeriode,
             nilai: hitungPersentaseNilai(hafalanFiltered)
           },
           tahsin: {
@@ -1502,10 +1705,12 @@
           },
           murajaah: {
             jumlah: murajaahFiltered.length,
+            totalHalaman: murajaahFiltered.reduce((sum, m) => sum + (m.jumlah_halaman || 0), 0),
             nilai: hitungPersentaseNilai(murajaahFiltered)
           },
           hadits: {
             jumlah: haditsFiltered.length,
+            totalHadits: tambahanHaditsPeriode,
             nilai: hitungPersentaseNilai(haditsFiltered)
           },
           mutabaah: {
@@ -1513,7 +1718,8 @@
             nilai: hitungPersentaseNilai(mutabaahFiltered)
           },
           tasmi: {
-            jumlah: tasmiFiltered.length,
+            jumlah: jumlahInputTasmi,
+            totalJuz: totalJuzTasmi,
             nilai: hitungPersentaseNilai(tasmiFiltered)
           },
           absensi: {
@@ -1569,7 +1775,7 @@
             </div>
             <div class="mt-3 pt-3 border-t border-gray-400">
               <p class="text-center text-sm text-gray-700">
-                <span class="font-bold text-gray-800">Tambahan periode ini: ${laporanData.hafalan.jumlah} halaman Al-Qur'an, ${laporanData.hadits.jumlah} hadits</span>
+                <span class="font-bold text-gray-800">Tambahan periode ini: ${laporanData.hafalan.totalHalaman} halaman Al-Qur'an, ${laporanData.hadits.totalHadits} hadits</span>
               </p>
             </div>
           </div>
@@ -1578,7 +1784,7 @@
             <thead>
               <tr class="bg-gray-200">
                 <th class="border border-gray-300 px-3 py-2">Kategori</th>
-                <th class="border border-gray-300 px-3 py-2">Jumlah Input</th>
+                <th class="border border-gray-300 px-3 py-2">Detail</th>
                 <th class="border border-gray-300 px-3 py-2">A (%)</th>
                 <th class="border border-gray-300 px-3 py-2">B (%)</th>
                 <th class="border border-gray-300 px-3 py-2">C (%)</th>
@@ -1588,7 +1794,7 @@
             <tbody>
               <tr>
                 <td class="border border-gray-300 px-3 py-2">Hafalan Baru</td>
-                <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.hafalan.jumlah}</td>
+                <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.hafalan.totalHalaman} hal</td>
                 <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.hafalan.nilai.A}</td>
                 <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.hafalan.nilai.B}</td>
                 <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.hafalan.nilai.C}</td>
@@ -1596,7 +1802,7 @@
               </tr>
               <tr>
                 <td class="border border-gray-300 px-3 py-2">Tahsin</td>
-                <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.tahsin.jumlah}</td>
+                <td class="border border-gray-300 px-3 py-2 text-center">-</td>
                 <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.tahsin.nilai.A}</td>
                 <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.tahsin.nilai.B}</td>
                 <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.tahsin.nilai.C}</td>
@@ -1604,7 +1810,7 @@
               </tr>
               <tr>
                 <td class="border border-gray-300 px-3 py-2">Murajaah</td>
-                <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.murajaah.jumlah}</td>
+                <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.murajaah.totalHalaman} hal</td>
                 <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.murajaah.nilai.A}</td>
                 <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.murajaah.nilai.B}</td>
                 <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.murajaah.nilai.C}</td>
@@ -1612,7 +1818,7 @@
               </tr>
               <tr>
                 <td class="border border-gray-300 px-3 py-2">Hadits</td>
-                <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.hadits.jumlah}</td>
+                <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.hadits.totalHadits} hadits</td>
                 <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.hadits.nilai.A}</td>
                 <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.hadits.nilai.B}</td>
                 <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.hadits.nilai.C}</td>
@@ -1620,7 +1826,7 @@
               </tr>
               <tr>
                 <td class="border border-gray-300 px-3 py-2">Mutaba'ah</td>
-                <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.mutabaah.jumlah}</td>
+                <td class="border border-gray-300 px-3 py-2 text-center">-</td>
                 <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.mutabaah.nilai.A}</td>
                 <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.mutabaah.nilai.B}</td>
                 <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.mutabaah.nilai.C}</td>
@@ -1628,7 +1834,7 @@
               </tr>
               <tr>
                 <td class="border border-gray-300 px-3 py-2">Tasmi'</td>
-                <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.tasmi.jumlah}</td>
+                <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.tasmi.totalJuz} juz</td>
                 <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.tasmi.nilai.A}</td>
                 <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.tasmi.nilai.B}</td>
                 <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.tasmi.nilai.C}</td>
@@ -1702,6 +1908,10 @@
         const tanggalMulai = new Date(tahun, bulan - 1, 1).toISOString().split('T')[0];
         const tanggalSelesai = new Date(tahun, bulan, 0).toISOString().split('T')[0];
         
+        // Reload santri data untuk mendapatkan data terkini
+        const santriSnapshot = await window.firestore.getDocs(window.firestore.collection(window.db, 'santri'));
+        const santriDataTerkini = santriSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
         // Load all data
         const hafalanSnap = await window.firestore.getDocs(window.firestore.collection(window.db, 'hafalan_baru'));
         const hafalanData = hafalanSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -1733,32 +1943,32 @@
         const tasmiFiltered = filterDataByDateRange(tasmiData, tanggalMulai, tanggalSelesai, santriId);
         const absensiFiltered = filterDataByDateRange(absensiData, tanggalMulai, tanggalSelesai, santriId);
         
-        // Calculate statistics
-        const santri = santriData.find(s => s.id === santriId);
+        // Calculate statistics - gunakan data terkini
+        const santri = santriDataTerkini.find(s => s.id === santriId);
         const pembimbing = pembimbingData.find(p => p.id === currentPembimbingId);
         
         const bulanNama = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'][parseInt(bulan)];
         
-        // Hitung hafalan awal (dari form kelola santri)
-        const hafalanAwalJuz = santri.total_hafalan_juz || 0;
-        const hafalanAwalHalaman = santri.total_hafalan_halaman || 0;
-        const haditsAwal = santri.total_hadits || 0;
-        
         // Hitung tambahan hafalan dari input bulan ini
-        const tambahanHalamanBulan = hafalanFiltered.length;
-        const tambahanHaditsBulan = haditsFiltered.length;
+        const tambahanHalamanBulan = hafalanFiltered.reduce((sum, h) => sum + (h.jumlah_halaman || 0), 0);
+        const tambahanHaditsBulan = haditsFiltered.reduce((sum, h) => sum + (h.jumlah_hadits || 0), 0);
         
-        // Total hafalan = hafalan awal + tambahan bulan ini
-        let totalJuz = hafalanAwalJuz;
-        let totalHalaman = hafalanAwalHalaman + tambahanHalamanBulan;
+        // Total hafalan SAAT INI dari database santri (sudah ter-update)
+        const totalJuz = santri.total_hafalan_juz || 0;
+        const totalHalaman = santri.total_hafalan_halaman || 0;
+        const totalHadits = santri.total_hadits || 0;
         
-        // Konversi halaman ke juz jika >= 20 halaman
-        if (totalHalaman >= 20) {
-          totalJuz += Math.floor(totalHalaman / 20);
-          totalHalaman = totalHalaman % 20;
+        // Hitung hafalan awal bulan = total sekarang - tambahan bulan
+        let hafalanAwalJuz = totalJuz;
+        let hafalanAwalHalaman = totalHalaman - tambahanHalamanBulan;
+        
+        // Jika hafalanAwalHalaman negatif, kurangi juz
+        while (hafalanAwalHalaman < 0) {
+          hafalanAwalJuz -= 1;
+          hafalanAwalHalaman += 20;
         }
         
-        const totalHadits = haditsAwal + tambahanHaditsBulan;
+        const haditsAwal = totalHadits - tambahanHaditsBulan;
         
         const hafalanNilai = hitungPersentaseNilai(hafalanFiltered);
         const tahsinNilai = hitungPersentaseNilai(tahsinFiltered);
@@ -1767,23 +1977,27 @@
         const mutabaahNilai = hitungPersentaseNilai(mutabaahFiltered);
         const tasmiNilai = hitungPersentaseNilai(tasmiFiltered);
         
+        // Hitung jumlah juz tasmi
+        const totalJuzTasmi = tasmiFiltered.reduce((sum, t) => sum + (t.jumlah_juz || 0), 0);
+        
         const laporanData = {
           santri: santri,
           pembimbing: pembimbing,
           bulan: bulanNama,
           tahun: tahun,
           hafalanAwal: {
-            juz: hafalanAwalJuz,
-            halaman: hafalanAwalHalaman
+            juz: hafalanAwalJuz >= 0 ? hafalanAwalJuz : 0,
+            halaman: hafalanAwalHalaman >= 0 ? hafalanAwalHalaman : 0
           },
           hafalanTotal: {
             juz: totalJuz,
             halaman: totalHalaman
           },
-          haditsAwal: haditsAwal,
+          haditsAwal: haditsAwal >= 0 ? haditsAwal : 0,
           haditsTotal: totalHadits,
           hafalan: {
             jumlah: hafalanFiltered.length,
+            totalHalaman: tambahanHalamanBulan,
             rata: hitungRataRata(hafalanNilai)
           },
           tahsin: {
@@ -1792,10 +2006,12 @@
           },
           murajaah: {
             jumlah: murajaahFiltered.length,
+            totalHalaman: murajaahFiltered.reduce((sum, m) => sum + (m.jumlah_halaman || 0), 0),
             rata: hitungRataRata(murajaahNilai)
           },
           hadits: {
             jumlah: haditsFiltered.length,
+            totalHadits: tambahanHaditsBulan,
             rata: hitungRataRata(haditsNilai)
           },
           mutabaah: {
@@ -1804,6 +2020,7 @@
           },
           tasmi: {
             jumlah: tasmiFiltered.length,
+            totalJuz: totalJuzTasmi,
             rata: hitungRataRata(tasmiNilai)
           },
           absensi: {
@@ -1868,39 +2085,39 @@
             <thead>
               <tr class="bg-gray-200">
                 <th class="border border-gray-300 px-3 py-2">Kategori</th>
-                <th class="border border-gray-300 px-3 py-2">Jumlah Input</th>
+                <th class="border border-gray-300 px-3 py-2">Detail</th>
                 <th class="border border-gray-300 px-3 py-2">Rata-rata Nilai</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td class="border border-gray-300 px-3 py-2">Hafalan Baru</td>
-                <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.hafalan.jumlah}</td>
+                <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.hafalan.totalHalaman} hal</td>
                 <td class="border border-gray-300 px-3 py-2 text-center font-bold">${laporanData.hafalan.rata}</td>
               </tr>
               <tr>
                 <td class="border border-gray-300 px-3 py-2">Tahsin</td>
-                <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.tahsin.jumlah}</td>
+                <td class="border border-gray-300 px-3 py-2 text-center">-</td>
                 <td class="border border-gray-300 px-3 py-2 text-center font-bold">${laporanData.tahsin.rata}</td>
               </tr>
               <tr>
                 <td class="border border-gray-300 px-3 py-2">Murajaah</td>
-                <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.murajaah.jumlah}</td>
+                <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.murajaah.totalHalaman} hal</td>
                 <td class="border border-gray-300 px-3 py-2 text-center font-bold">${laporanData.murajaah.rata}</td>
               </tr>
               <tr>
                 <td class="border border-gray-300 px-3 py-2">Hadits</td>
-                <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.hadits.jumlah}</td>
+                <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.hadits.totalHadits} hadits</td>
                 <td class="border border-gray-300 px-3 py-2 text-center font-bold">${laporanData.hadits.rata}</td>
               </tr>
               <tr>
                 <td class="border border-gray-300 px-3 py-2">Mutaba'ah</td>
-                <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.mutabaah.jumlah}</td>
+                <td class="border border-gray-300 px-3 py-2 text-center">-</td>
                 <td class="border border-gray-300 px-3 py-2 text-center font-bold">${laporanData.mutabaah.rata}</td>
               </tr>
               <tr>
                 <td class="border border-gray-300 px-3 py-2">Tasmi'</td>
-                <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.tasmi.jumlah}</td>
+                <td class="border border-gray-300 px-3 py-2 text-center">${laporanData.tasmi.totalJuz} juz</td>
                 <td class="border border-gray-300 px-3 py-2 text-center font-bold">${laporanData.tasmi.rata}</td>
               </tr>
             </tbody>
@@ -1993,6 +2210,10 @@
             { bulan: 6, tahun: tahunSelesai }
           ];
         }
+        
+        // Reload santri data untuk mendapatkan data terkini
+        const santriSnapshot = await window.firestore.getDocs(window.firestore.collection(window.db, 'santri'));
+        const santriDataTerkini = santriSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
         // Load all data
         const hafalanSnap = await window.firestore.getDocs(window.firestore.collection(window.db, 'hafalan_baru'));
@@ -2094,30 +2315,30 @@
           tasmi: hitungRataDariBulan('tasmi')
         };
         
-        // Calculate semester statistics
-        const santri = santriData.find(s => s.id === santriId);
+        // Calculate semester statistics - gunakan data terkini
+        const santri = santriDataTerkini.find(s => s.id === santriId);
         const pembimbing = pembimbingData.find(p => p.id === currentPembimbingId);
         
-        // Hitung hafalan awal (dari form kelola santri)
-        const hafalanAwalJuz = santri.total_hafalan_juz || 0;
-        const hafalanAwalHalaman = santri.total_hafalan_halaman || 0;
-        const haditsAwal = santri.total_hadits || 0;
-        
         // Hitung tambahan hafalan dari input semester ini
-        const tambahanHalamanSemester = hafalanSemester.length;
-        const tambahanHaditsSemester = haditsSemester.length;
+        const tambahanHalamanSemester = hafalanSemester.reduce((sum, h) => sum + (h.jumlah_halaman || 0), 0);
+        const tambahanHaditsSemester = haditsSemester.reduce((sum, h) => sum + (h.jumlah_hadits || 0), 0);
         
-        // Total hafalan = hafalan awal + tambahan semester
-        let totalJuz = hafalanAwalJuz;
-        let totalHalaman = hafalanAwalHalaman + tambahanHalamanSemester;
+        // Total hafalan SAAT INI dari database santri (sudah ter-update)
+        const totalJuz = santri.total_hafalan_juz || 0;
+        const totalHalaman = santri.total_hafalan_halaman || 0;
+        const totalHadits = santri.total_hadits || 0;
         
-        // Konversi halaman ke juz jika >= 20 halaman
-        if (totalHalaman >= 20) {
-          totalJuz += Math.floor(totalHalaman / 20);
-          totalHalaman = totalHalaman % 20;
+        // Hitung hafalan awal semester = total sekarang - tambahan semester
+        let hafalanAwalJuz = totalJuz;
+        let hafalanAwalHalaman = totalHalaman - tambahanHalamanSemester;
+        
+        // Jika hafalanAwalHalaman negatif, kurangi juz
+        while (hafalanAwalHalaman < 0) {
+          hafalanAwalJuz -= 1;
+          hafalanAwalHalaman += 20;
         }
         
-        const totalHadits = haditsAwal + tambahanHaditsSemester;
+        const haditsAwal = totalHadits - tambahanHaditsSemester;
         
         // Calculate overall average
         const nilaiValid = Object.values(nilai).filter(n => n.huruf !== '-');
@@ -2141,14 +2362,14 @@
             huruf: rataHuruf
           },
           hafalanAwal: {
-            juz: hafalanAwalJuz,
-            halaman: hafalanAwalHalaman
+            juz: hafalanAwalJuz >= 0 ? hafalanAwalJuz : 0,
+            halaman: hafalanAwalHalaman >= 0 ? hafalanAwalHalaman : 0
           },
           hafalanTotal: {
             juz: totalJuz,
             halaman: totalHalaman
           },
-          haditsAwal: haditsAwal,
+          haditsAwal: haditsAwal >= 0 ? haditsAwal : 0,
           haditsTotal: totalHadits,
           tambahanHafalan: tambahanHalamanSemester,
           tambahanHadits: tambahanHaditsSemester,
@@ -2463,5 +2684,5 @@
     // Initialize app
     init();
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9b8c06b0654e55de',t:'MTc2NzU0MzIzNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9b9213f7920dbc78',t:'MTc2NzYwNjY5Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
