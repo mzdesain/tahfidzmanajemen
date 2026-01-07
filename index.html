@@ -223,9 +223,10 @@
        <div class="flex-shrink-0"><i class="fas fa-info-circle text-2xl sm:text-3xl text-indigo-600"></i>
        </div>
        <div class="ml-3 sm:ml-4 flex-1 min-w-0">
-        <h3 class="text-base sm:text-lg font-bold text-gray-800 mb-2">Selamat Datang di Sistem Tahfidz 📖</h3>
-        <p class="text-gray-700 text-xs sm:text-sm mb-2 leading-relaxed">Sistem ini membantu Anda mengelola dan memantau perkembangan hafalan santri secara terstruktur dan profesional.</p>
-        <p class="text-xs sm:text-sm text-gray-600 bg-white bg-opacity-60 rounded-lg p-2 sm:p-3 mt-3">💡 <strong>Tips:</strong> Mulai dengan menambahkan data pembimbing di menu <span class="font-semibold text-indigo-700">Kelola Pembimbing</span>, kemudian masuk ke <span class="font-semibold text-indigo-700">Menu Pembimbing</span> untuk mengelola santri dan input data hafalan.</p>
+        <h3 class="text-base sm:text-lg font-bold text-gray-800 mb-2">Selamat Datang di Sistem Monitoring Hafalan Santri</h3>
+        <p class="text-sm text-gray-600 bg-white bg-opacity-60 rounded-lg p-3 mt-3">Sistem ini membantu Pembimbing (Muhaffizh/ah) untuk mengelola dan memantau perkembangan hafalan santri secara terstruktur dan profesional.</p>
+        <p class="text-sm text-gray-600 bg-white bg-opacity-60 rounded-lg p-3 mt-3"><strong>Tips 1:</strong> Mulai dengan menambahkan data pembimbing di menu <span class="font-semibold text-black-700">Kelola Pembimbing</span>, kemudian masuk ke <span class="font-semibold text-black-700">Menu Pembimbing</span> untuk mengelola santri dan input data hafalan.</p>
+         <p class="text-sm text-gray-600 bg-white bg-opacity-60 rounded-lg p-3 mt-3"><strong>Tips 2:</strong> Untuk penginputan data harian <span class="font-semibold text-black-700">bisa menggunakan HP atau laptop.</span> Adapun untuk download laporan pekanan, laporan bulanan dan rapor semester, <span class="font-semibold text-black-700">disarankan untuk menggunakan LAPTOP</span> agar hasil downloadnya rapi.</p>
        </div>
       </div>
      </div>
@@ -1916,7 +1917,7 @@
           
           <div class="mb-6 p-4 bg-gray-50 rounded-lg">
             <h3 class="font-bold text-gray-800 mb-2">Catatan Pembimbing:</h3>
-            <p class="text-sm text-gray-700">${generateCatatanPekanan(laporanData)}</p>
+            <p class="text-sm text-gray-700 text-justify">${generateCatatanPekanan(laporanData)}</p>
           </div>
           
           <div class="mt-8 flex justify-between text-sm">
@@ -2196,7 +2197,7 @@
           
           <div class="mb-6 p-4 bg-gray-50 rounded-lg">
             <h3 class="font-bold text-gray-800 mb-2">Catatan Pembimbing:</h3>
-            <p class="text-sm text-gray-700">${generateCatatanBulanan(laporanData)}</p>
+            <p class="text-sm text-gray-700 text-justify">${generateCatatanBulanan(laporanData)}</p>
           </div>
           
           <div class="mt-8 flex justify-between text-sm">
@@ -2556,7 +2557,7 @@
           
           <div class="mb-6 p-4 bg-gray-50 rounded-lg border-l-4 border-gray-800">
             <h3 class="font-bold text-gray-800 mb-2">Catatan Pembimbing:</h3>
-            <p class="text-sm text-gray-700 leading-relaxed">${generateCatatanRapor(laporanData)}</p>
+            <p class="text-sm text-gray-700 leading-relaxed text-justify">${generateCatatanRapor(laporanData)}</p>
           </div>
           
           <div class="mt-8 grid grid-cols-3 gap-8 text-sm">
