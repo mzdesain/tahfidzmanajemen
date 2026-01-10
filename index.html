@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sistem Monitoring Hafalan Santri</title>
-   <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -12,8 +12,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script><!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, orderBy, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, orderBy, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
     
     const firebaseConfig = {
       apiKey: "AIzaSyAxoe-Bg6WUn59KjzaunvkCRVUbi1X95PQ",
@@ -26,13 +25,10 @@ import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from 'https:/
     };
     
     const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app); // Inisialisasi Auth
+    const db = getFirestore(app);
     
-   window.auth = auth;
-window.db = db;
-window.firestore = { collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, orderBy, onSnapshot };
-window.firebaseAuth = { signInWithEmailAndPassword, onAuthStateChanged };
+    window.db = db;
+    window.firestore = { collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, orderBy, onSnapshot };
   </script>
   <style>
     body {
@@ -894,7 +890,6 @@ window.firebaseAuth = { signInWithEmailAndPassword, onAuthStateChanged };
         await window.firestore.addDoc(window.firestore.collection(window.db, 'pembimbing'), {
           nama_pembimbing: document.getElementById('nama-pembimbing').value,
           nama_halaqah: document.getElementById('nama-halaqah').value
-          userId: window.auth.currentUser.uid
         });
         
         showToast('Pembimbing berhasil ditambahkan');
