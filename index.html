@@ -226,6 +226,43 @@
                     </div>
                 </form>
             </div>
+        </div>
+        <div id="edit-santri-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-backdrop">
+            <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+                <h3 class="text-xl font-bold text-gray-800 mb-4"><i class="fas fa-user-edit mr-2 text-blue-600"></i>Edit
+                    Data Santri</h3>
+                <form id="form-edit-santri" class="space-y-4">
+                    <input type="hidden" id="edit-santri-id">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Santri</label>
+                        <input type="text" id="edit-nama-santri" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">NIS</label>
+                            <input type="text" id="edit-nis" required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Kelas</label>
+                            <input type="text" id="edit-kelas" required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Wali</label>
+                        <input type="text" id="edit-nama-wali" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex space-x-2 pt-2">
+                        <button type="submit" id="btn-update-santri"
+                            class="flex-1 bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700">Update</button>
+                        <button type="button" onclick="window.closeEditSantriModal()"
+                            class="flex-1 bg-gray-300 text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-gray-400">Batal</button>
+                    </div>
+                </form>
+            </div>
         </div><!-- Main Content -->
         <div class="p-3 sm:p-4 md:p-6"><!-- Dashboard Page -->
             <div id="page-dashboard" class="page-content">
@@ -1283,23 +1320,28 @@
             }
 
             container.innerHTML = santri.map(s => `
-        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
-          <div class="flex items-start justify-between mb-2">
-            <div class="flex-1">
-              <p class="font-medium text-gray-800">${s.nama_santri}</p>
-              <p class="text-sm text-gray-600">NIS: ${s.nis} | Kelas: ${s.kelas}</p>
-            </div>
-            <button onclick="window.deleteSantri('${s.id}')" class="text-red-600 hover:text-red-800 px-3 py-1 rounded-lg hover:bg-red-50">
-              <i class="fas fa-trash"></i>
-            </button>
-          </div>
-          <div class="grid grid-cols-2 gap-2 text-sm">
-            <p class="text-gray-600">Wali: ${s.nama_wali}</p>
-            <p class="text-gray-600">Hafalan: ${s.total_hafalan_juz} Juz ${s.total_hafalan_halaman} Hal</p>
-            <p class="text-gray-600">Hadits: ${s.total_hadits}</p>
-          </div>
-        </div>
-      `).join('');
+                <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div class="flex items-start justify-between mb-2">
+                    <div class="flex-1">
+                      <p class="font-medium text-gray-800">${s.nama_santri}</p>
+                      <p class="text-sm text-gray-600">NIS: ${s.nis} | Kelas: ${s.kelas}</p>
+                    </div>
+                    <div class="flex space-x-2">
+                      <button onclick="window.editSantri('${s.id}')" class="text-blue-600 hover:text-blue-800 px-2 py-1 rounded-lg hover:bg-blue-50">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button onclick="window.deleteSantri('${s.id}')" class="text-red-600 hover:text-red-800 px-2 py-1 rounded-lg hover:bg-red-50">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2 text-sm">
+                    <p class="text-gray-600">Wali: ${s.nama_wali}</p>
+                    <p class="text-gray-600">Hafalan: ${s.total_hafalan_juz} Juz ${s.total_hafalan_halaman} Hal</p>
+                    <p class="text-gray-600">Hadits: ${s.total_hadits}</p>
+                  </div>
+                </div>
+            `).join('');
         }
 
         function updateSantriDropdowns() {
@@ -3195,6 +3237,50 @@
                 showToast('Gagal mencetak raporan', 'error');
             }
         };
+
+        // Fungsi Membuka Modal Edit Santri
+        window.editSantri = function (id) {
+            const santri = santriData.find(s => s.id === id);
+            if (!santri) return;
+            document.getElementById('edit-santri-id').value = id;
+            document.getElementById('edit-nama-santri').value = santri.nama_santri;
+            document.getElementById('edit-nis').value = santri.nis;
+            document.getElementById('edit-kelas').value = santri.kelas;
+            document.getElementById('edit-nama-wali').value = santri.nama_wali;
+            document.getElementById('edit-santri-modal').classList.remove('hidden');
+        };
+
+        // Fungsi Menutup Modal Edit Santri
+        window.closeEditSantriModal = function () {
+            document.getElementById('edit-santri-modal').classList.add('hidden');
+        };
+
+        // Proses Update ke Firebase
+        document.getElementById('form-edit-santri').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-update-santri');
+            btn.classList.add('btn-loading');
+            btn.disabled = true;
+            try {
+                const id = document.getElementById('edit-santri-id').value;
+                const docRef = window.firestore.doc(window.db, 'santri', id);
+                await window.firestore.updateDoc(docRef, {
+                    nama_santri: document.getElementById('edit-nama-santri').value,
+                    nis: document.getElementById('edit-nis').value,
+                    kelas: document.getElementById('edit-kelas').value,
+                    nama_wali: document.getElementById('edit-nama-wali').value
+                });
+                showToast('Data santri berhasil diupdate');
+                window.closeEditSantriModal();
+                await loadAllData();
+                updateSantriList();
+            } catch (error) {
+                showToast('Gagal update data', 'error');
+            } finally {
+                btn.classList.remove('btn-loading');
+                btn.disabled = false;
+            }
+        });
 
         // Initialize app
         init();
